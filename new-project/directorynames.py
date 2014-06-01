@@ -6,6 +6,11 @@ import os
 import re
 
 
+def flatglob(paths):
+	if isinstance(paths, basestring):
+		paths = [paths]
+	return [item for sub_list in [glob.glob(path) for path in paths] for item in sub_list]
+
 def get_subdirs(dimension, uses):
 	if isinstance(uses, basestring):
 		uses = [uses]
@@ -30,7 +35,7 @@ def get_subdirs(dimension, uses):
 def parse_directory_structure(base_dir, year):
 	search_sub_dirs = get_subdirs(2, ["tmp", "jpg", "raw", "mov", "pano"])+get_subdirs(3, ["tmp", "3d", "l", "r"])
 	search_sub_dirs = [os.path.join(base_dir, subdir, str(year), "*") for subdir in search_sub_dirs]
-	search_sub_dirs = [item for sub_list in [glob.glob(subdir) for subdir in search_sub_dirs] for item in sub_list]
+	search_sub_dirs = flatglob(search_sub_dirs)
 	parsed_directory_structure = {}
 	for search_sub_dir in search_sub_dirs:
 		parsed_subdir = re.match(".*/(?P<year>\d*)_(?P<project_number>\d*)_(?P<project_name>[^/]*)", search_sub_dir).groupdict()
