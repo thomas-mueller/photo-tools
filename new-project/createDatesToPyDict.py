@@ -7,6 +7,7 @@ import subprocess
 import time
 
 import directorynames
+import progressmonitor
 
 
 def main():
@@ -26,11 +27,14 @@ def main():
 	date_format = "%Y:%m:%d %H:%M:%S"
 	
 	create_dates = {}
+	progress = progressmonitor.ProgressMonitor(len(args.input))
 	for input_file in args.input:
 		date_string = subprocess.check_output(["exiftool", "-d", date_format, "-"+args.exif_tag, "-s3", input_file]).replace("\n", "")
 		date_seconds = time.mktime(time.strptime(date_string, date_format))
 		file_name, file_extension = os.path.splitext(input_file)
 		create_dates.setdefault(date_seconds, {}).setdefault(file_extension, []).append(os.path.abspath(input_file))
+		progress.next()
+	print
 
 	with open(args.output, "w") as output_file:
 		output_file.write("create_dates = "+str(create_dates)+"\n")
