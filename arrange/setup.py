@@ -25,6 +25,9 @@ def determineNumber(options):
 		dirs = []
 		for use in tools.getUses(options):
 			subDir = os.path.join(tools.getDir(options.base_dir, use), str(options.year))
+			if not os.path.exists(subDir):
+				os.makedirs(subDir)
+			
 			dirsTemp = map(lambda dirEntry: os.path.join(subDir, dirEntry), os.listdir(subDir))
 			dirs.extend(filter(lambda dirEntry: os.path.isdir(dirEntry), dirsTemp))
 		
