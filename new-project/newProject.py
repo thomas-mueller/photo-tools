@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
 
 import argparse
 import datetime
@@ -40,6 +41,7 @@ def main():
 			#os.makedirs(tmp_dir)
 			print tmp_dir, "created."
 	print "Copy your files in these directories."
+
 
 if __name__ == "__main__":
 	main()

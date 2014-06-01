@@ -1,4 +1,6 @@
 
+# -*- coding: utf-8 -*-
+
 import glob
 import os
 import re
@@ -43,3 +45,4 @@ def determine_project_number(base_dir, year, project_name):
 
 def get_dirname(year, project_number, n_project_number_digits, project_name):
 	return str(year)+"_"+(("%s0%dd" % ("%", n_project_number_digits)) % project_number)+"_"+project_name
+
