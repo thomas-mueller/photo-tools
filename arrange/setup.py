@@ -9,9 +9,9 @@ import tools
 
 # =================================================================================================	
 def setupDirs(options, doPanos=False, log=False):
-	projectSubDir = options.year+"_"+options.project_number+"_"+options.project_name if options.year and options.project_number and options.project_name else ""
+	projectSubDir = str(options.year)+"_"+str(options.project_number)+"_"+options.project_name if options.year and options.project_number and options.project_name else ""
 	for use in tools.getUses(options):
-		dirToCreate = os.path.join(tools.getDir(options.base_dir, use), options.year, projectSubDir)
+		dirToCreate = os.path.join(tools.getDir(options.base_dir, use), str(options.year), projectSubDir)
 		tools.makeDir(dirToCreate, log=log)
 		
 		if doPanos and use=="pano":
@@ -24,7 +24,7 @@ def determineNumber(options):
 	if not options.project_number:
 		dirs = []
 		for use in tools.getUses(options):
-			subDir = os.path.join(tools.getDir(options.base_dir, use), options.year)
+			subDir = os.path.join(tools.getDir(options.base_dir, use), str(options.year))
 			dirsTemp = map(lambda dirEntry: os.path.join(subDir, dirEntry), os.listdir(subDir))
 			dirs.extend(filter(lambda dirEntry: os.path.isdir(dirEntry), dirsTemp))
 		
@@ -43,7 +43,7 @@ def main():
 			              description="Setup of directory structure for a new project. The name of the new project can either be passed as a parameter or a simple argument.")
 
 	parser.add_option("--base-dir", default=".", help="Base directory containing at least directory 2D [Default: .].")
-	parser.add_option("--year", help="Year for project [Default: this year].")
+	parser.add_option("--year", type="int", help="Year for project [Default: this year].")
 	parser.add_option("--project-number", type="int", help="Number for project [Default: auto-determined].")
 	parser.add_option("--project-name", help="New project name")
 	
@@ -78,7 +78,6 @@ def main():
 	
 	# determine year and number and create the directories
 	if not options.year: options.year = str(datetime.date.today().year)
-	setupDirs(options, log=True)
 	
 	determineNumber(options)
 	
@@ -90,7 +89,7 @@ def main():
 		if options.n_panos > len(options.panos): options.panos.extend((options.n_panos-len(options.panos)) * [options.project_name])
 		
 		if len(options.panos) > 0:
-			numberOfDigits = tools.getNumberOfDigits(len(options.panos))
+			numberOfDigits = max(tools.NUMBER_OF_DIGITS, tools.getNumberOfDigits(len(options.panos)))
 			for index, panoName in enumerate(options.panos): options.panos[index] = tools.getNumberFilledString(index+1, numberOfDigits)+"_"+panoName
 	
 	# set up directories

@@ -16,6 +16,7 @@ def getDir(baseDir=".", use=None):
 	subDir = ""
 	if use:
 		if use == "2d": subDir = "2D"
+		elif use == "tmp": subDir = "2D/TMP"
 		elif use == "jpeg": subDir = "2D/JPEG"
 		elif use == "mov": subDir = "2D/MOV"
 		elif use == "pano": subDir = "2D/PANO"
@@ -38,6 +39,8 @@ def getUses(options):
 	if not options.no_mov: uses.append("mov")
 	if not options.no_pano: uses.append("pano")
 	if not options.no_raw: uses.append("raw")
+	if not options.no_jpeg or not options.no_mov or not options.no_pano or not options.no_raw:
+		uses.append("tmp")
 	if not options.no_3d:
 		uses.append("3d-3d")
 		uses.append("3d-l")
