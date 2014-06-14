@@ -3,29 +3,45 @@
 
 import argparse
 import glob
+import locale
+import numpy
 import os
 import pprint
+import scipy.cluster.hierarchy
+import time
 
 import directorynames
 import photoinfo
 
 
-def check_incomplete_jpg_raw_pairs(project_dir, jpg_extensions=None, raw_extensions=None):
+def get_files_by_date_and_type(project_dir, types_dict=None):
 
 	# default arguments
-	if jpg_extensions == None: jpg_extensions = ["jpg", "jpeg", "JPG", "JPEG"]
-	if raw_extensions == None: raw_extensions = ["cr2", "CR2"]
+	if types_dict == None:
+		types_dict = {
+			"jpg" : ["jpg", "jpeg", "JPG", "JPEG"],
+			"raw" : ["cr2", "CR2"],
+		}
 	
-	# extract all files to check
-	jpgFiles = directorynames.flatglob([os.path.join(project_dir, "*."+extension) for extension in jpg_extensions])
-	rawFiles = directorynames.flatglob([os.path.join(project_dir, "*."+extension) for extension in raw_extensions])
-	
-	# extract all creation dates
-	files_by_date = {}
-	for label, files in zip(["jpg", "raw"], [jpgFiles, rawFiles]):
-		for image_file in files:
+	files_by_date_and_type = {}
+	for label, types in types_dict.items():
+		for image_file in directorynames.flatglob([os.path.join(project_dir, "*."+image_type) for image_type in types]):
 			date = photoinfo.load_exif_field(image_file, "-d", "%Y:%m:%d %H:%M:%S", "-DateTimeOriginal")
-			files_by_date.setdefault(date, {}).setdefault(label, []).append(image_file)
+			if len(types_dict) == 1:
+				files_by_date_and_type.setdefault(date, []).append(image_file)
+			else:
+				files_by_date_and_type.setdefault(date, {}).setdefault(label, []).append(image_file)
+	
+	return files_by_date_and_type
+
+
+def check_incomplete_jpg_raw_pairs(project_dir):
+
+	types_dict = {
+		"jpg" : ["jpg", "jpeg", "JPG", "JPEG"],
+		"raw" : ["cr2", "CR2"],
+	}
+	files_by_date_and_type = get_files_by_date_and_type(project_dir, types_dict)
 	
 	# filter for incomplete pais
 	def filter_incomplete_paris(date_files_dict_pair):
@@ -34,7 +50,7 @@ def check_incomplete_jpg_raw_pairs(project_dir, jpg_extensions=None, raw_extensi
 		if len(date_files_dict_pair[1]["jpg"]) != len(date_files_dict_pair[1]["raw"]): return True
 		return False
 	
-	incomplete_pairs = dict(filter(lambda item: filter_incomplete_paris(item), files_by_date.items()))
+	incomplete_pairs = dict(filter(lambda item: filter_incomplete_paris(item), files_by_date_and_type.items()))
 	
 	for date, files_dict in incomplete_pairs.items():
 		jpg_files = files_dict.get("jpg", [])
@@ -79,7 +95,47 @@ def check_incomplete_jpg_raw_pairs(project_dir, jpg_extensions=None, raw_extensi
 
 
 def check_panos(project_dir):
-	pass
+
+	types_dict = {
+		"all" : ["jpg", "jpeg", "JPG", "JPEG"]#, "cr2", "CR2"],
+	}
+	files_by_date = get_files_by_date_and_type(project_dir, types_dict)
+	
+	portrait_file_items = []
+	for date, files in files_by_date.items():
+		date_seconds = int(time.mktime(time.strptime(date, "%Y:%m:%d %H:%M:%S")))
+		for image_file in files:
+			dimensions = [int(item) for item in photoinfo.load_image_dimensions(image_file).split()]
+			if dimensions[1] > dimensions[0]:
+				portrait_file_items.append([date_seconds, image_file])
+	portrait_file_items.sort(cmp=lambda a, b: a[0] - b[0] if a[0] - b[0] != 0 else locale.strcoll(a[1], b[1]))
+	
+	dates = numpy.array([[date] for date in zip(*portrait_file_items)[0]])
+	cluster_indices = scipy.cluster.hierarchy.fclusterdata(dates, 1.0)
+	portrait_file_items_clustered = {}
+	for index, cluster_index in enumerate(cluster_indices):
+		portrait_file_items_clustered.setdefault(cluster_index, []).append(portrait_file_items[index])
+	
+	portrait_files_clustered = sorted(portrait_file_items_clustered.values(), key=lambda item: item[0])
+	
+	# create symlinks to detected files
+	subdir = "panos"
+	symlinks_dir = os.path.join(project_dir, subdir)
+	
+	for index, cluster in enumerate(portrait_files_clustered):
+		symlinks_cluster_dir = os.path.join(symlinks_dir, str(index))
+		if not os.path.exists(symlinks_cluster_dir):
+			os.makedirs(symlinks_cluster_dir)
+		
+		for file_item in cluster:
+			target = os.path.join(symlinks_cluster_dir, os.path.basename(file_item[1]))
+			if not os.path.exists(target):
+				os.symlink(os.path.relpath(file_item[1], symlinks_cluster_dir), target)
+	
+	if len(portrait_files_clustered) == 0:
+		print "No panoramas found."
+	else:
+		print len(portrait_files_clustered), "panoramas found. Symlinks to them are created in \"%s\"." % symlinks_dir
 
 
 def main():

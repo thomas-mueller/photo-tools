@@ -46,3 +46,9 @@ class FileCache(object):
 def load_exif_field(input_file, *exiftool_arguments):
 	return subprocess.check_output(["exiftool"]+list(exiftool_arguments)+["-s3", input_file]).replace("\n", "")
 
+
+@MemoryCache()
+@FileCache()
+def load_image_dimensions(input_file, *identify_arguments):
+	return subprocess.check_output(["identify"]+list(identify_arguments)+["-format", "%[fx:w] %[fx:h]", input_file]).replace("\n", "")
+
