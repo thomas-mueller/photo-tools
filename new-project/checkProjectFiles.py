@@ -7,6 +7,7 @@ import locale
 import numpy
 import os
 import pprint
+import re
 import scipy.cluster.hierarchy
 import time
 
@@ -110,8 +111,8 @@ def check_panos(project_dir):
 				portrait_file_items.append([date_seconds, image_file])
 	portrait_file_items.sort(cmp=lambda a, b: a[0] - b[0] if a[0] - b[0] != 0 else locale.strcoll(a[1], b[1]))
 	
-	dates = numpy.array([[date] for date in zip(*portrait_file_items)[0]])
-	cluster_indices = scipy.cluster.hierarchy.fclusterdata(dates, 1.0)
+	dates = numpy.array([[float(file_item[0]), float(re.search(".*_(?P<file_number>\d*)\.\w*", file_item[1]).groupdict()["file_number"])] for file_item in portrait_file_items])
+	cluster_indices = scipy.cluster.hierarchy.fclusterdata(dates, 25.0, criterion="distance")
 	portrait_file_items_clustered = {}
 	for index, cluster_index in enumerate(cluster_indices):
 		portrait_file_items_clustered.setdefault(cluster_index, []).append(portrait_file_items[index])
