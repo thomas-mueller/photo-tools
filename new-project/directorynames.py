@@ -2,8 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import glob
+import locale
 import os
 import re
+import time
+
+import progressmonitor
+import photoinfo
 
 
 def flatglob(paths):
@@ -48,6 +53,73 @@ def determine_project_number(base_dir, year, project_name):
 	project_number = parsed_directory_structure.get(project_name, max(parsed_directory_structure.values()+[0])+1)
 	return project_number
 
+
 def get_dirname(year, project_number, n_project_number_digits, project_name):
 	return str(year)+"_"+(("%s0%dd" % ("%", n_project_number_digits)) % project_number)+"_"+project_name
+
+
+def get_files_by_date_and_type(project_dirs, types_dict=None):
+
+	# (default) parameters
+	if isinstance(project_dirs, basestring):
+		project_dirs = [project_dirs]
+	if types_dict == None:
+		types_dict = {
+			"jpg" : ["jpg", "jpeg", "JPG", "JPEG"],
+			"raw" : ["cr2", "CR2"],
+		}
+	
+	files_by_date_and_type = {}
+	for project_dir in project_dirs:
+		for label, types in types_dict.items():
+			image_files = flatglob([os.path.join(project_dir, "*."+image_type) for image_type in types])
+			progress_monitor = progressmonitor.ProgressMonitor(len(image_files))
+			print "Loading dates for %s files in directory \"%s\"..." % (label, project_dir)
+			for image_file in image_files:
+				progress_monitor.next()
+				date = photoinfo.load_exif_field(image_file, "-d", "%Y:%m:%d %H:%M:%S", "-DateTimeOriginal")
+				date_seconds = int(time.mktime(time.strptime(date, "%Y:%m:%d %H:%M:%S")))
+				if len(types_dict) == 1:
+					files_by_date_and_type.setdefault(date_seconds, []).append(image_file)
+				else:
+					files_by_date_and_type.setdefault(date_seconds, {}).setdefault(label, []).append(image_file)
+			print ""
+	return files_by_date_and_type
+
+
+def get_sorted_jpg_raw_pairs(project_dirs, jpg_extensions=None, raw_extensions=None):
+
+	# (default) parameters
+	if isinstance(project_dirs, basestring):
+		project_dirs = [project_dirs]
+	if jpg_extensions == None:
+		jpg_extensions = ["jpg", "jpeg", "JPG", "JPEG"]
+	if raw_extensions == None:
+		raw_extensions = ["cr2", "CR2"]
+
+	types_dict = {
+		"jpg" : jpg_extensions,
+		"raw" : raw_extensions,
+	}
+	
+	files_by_date_and_type = get_files_by_date_and_type(project_dirs, types_dict=types_dict)
+	
+	jpg_raw_pairs = []
+	for date in sorted(files_by_date_and_type.keys()):
+		jpg_files = files_by_date_and_type[date].get("jpg", [])
+		raw_files = files_by_date_and_type[date].get("raw", [])
+		
+		if len(jpg_files) <= 1 and len(raw_files) <= 1:
+			jpg_raw_pairs.append([jpg_files[0] if len(jpg_files) > 0 else None,
+			                      raw_files[0] if len(raw_files) > 0 else None])
+		else:
+			jpg_file_names = [os.path.splitext(os.path.basename(image_file))[0] for image_file in jpg_files]
+			raw_file_names = [os.path.splitext(os.path.basename(image_file))[0] for image_file in raw_files]
+			
+			all_file_names = list(set(jpg_file_names).union(set(raw_file_names)))
+			for file_name in sorted(all_file_names, cmp=locale.strcoll):
+				jpg_raw_pairs.append([jpg_files[jpg_file_names.index(file_name)] if file_name in jpg_file_names else None,
+				                      raw_files[raw_file_names.index(file_name)] if file_name in raw_file_names else None])
+	
+	return jpg_raw_pairs
 
