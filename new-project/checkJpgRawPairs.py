@@ -6,6 +6,7 @@ import glob
 import os
 
 import directorynames
+import progressmonitor
 
 
 def prepare_incomplete_jpg_raw_pairs(input_dir, output_subdir):
