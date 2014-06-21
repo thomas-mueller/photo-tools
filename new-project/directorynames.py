@@ -54,8 +54,12 @@ def determine_project_number(base_dir, year, project_name):
 	return project_number
 
 
+def get_number_string(number, n_digits):
+	return ("%s0%dd" % ("%", n_digits)) % number
+
+
 def get_dirname(year, project_number, n_project_number_digits, project_name):
-	return str(year)+"_"+(("%s0%dd" % ("%", n_project_number_digits)) % project_number)+"_"+project_name
+	return str(year)+"_"+get_number_string(project_number, n_project_number_digits)+"_"+project_name
 
 
 def get_files_by_date_and_type(project_dirs, types_dict=None):
