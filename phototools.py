@@ -25,6 +25,12 @@ def load_image_dimensions(input_file, *identify_arguments):
 	return subprocess.check_output(["identify"]+list(identify_arguments)+["-format", "%[fx:w] %[fx:h]", input_file]).replace("\n", "")
 
 
+def is_portrait_format(input_file):
+	dimensions = load_image_dimensions(input_file)
+	dimensions = [int(dim) for dim in dimensions.split()]
+	return dimensions[0] < dimensions[1]
+
+
 def convert_date(date, date_format=date_format):
 	if isinstance(date, basestring):
 		return time.mktime(time.strptime(date, date_format))
