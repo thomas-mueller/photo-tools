@@ -28,6 +28,8 @@ def main():
 	steps = {
 		"2D" : [
 			"move.py",
+			"sync_jpg_raw.py",
+			"cluster_panos.py",
 			"rename.py",
 		],
 		"3D" : [
