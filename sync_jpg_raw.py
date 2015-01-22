@@ -25,7 +25,7 @@ def main():
 	                    help="Exif tag for date of creation. [Default: %(default)s]")
 	parser.add_argument("-m", "--modes", default=["print"], action="append",
 	                    choices=["print", "rm_jpg", "rm_raw"],
-	                    help="Modes.")
+	                    help="Modes. [Default: %(default)s]")
 	
 	args = parser.parse_args()
 	logger.initLogger(args)
@@ -52,13 +52,13 @@ def main():
 			only_raw_files.append(raw_files_dates[raw_index].file)
 			raw_index += 1
 	
-	if "print" in arg.modes:
+	if "print" in args.modes:
 		for file in only_jpg_files + only_raw_files:
 			log.info(file)
-	if "rm_jpg" in arg.modes:
+	if "rm_jpg" in args.modes:
 		for file in progressiterator(only_jpg_files, description="Remove supernumerous JPG files"):
 			os.remove(file)
-	if "rm_raw" in arg.modes:
+	if "rm_raw" in args.modes:
 		for file in progressiterator(only_raw_files, description="Remove supernumerous RAW files"):
 			os.remove(file)
 

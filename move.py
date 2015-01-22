@@ -27,14 +27,10 @@ def main():
 	parser.add_argument("-m", "--mov-dir", default="MOV",
 	                    help="Subdirectory name for the movies. [Default: %(default)s]")
 	
-	parser.add_argument("--jpg-ext", action="append",
-	                    default=["jpg", "jpeg", "JPG", "JPEG"],
+	parser.add_argument("--jpg-ext", nargs="+", default=["jpg", "jpeg", "JPG", "JPEG"],
 	                    help="JPG file extensions. [Default: %(default)s]")
-	parser.add_argument("--raw-ext", action="append",
-	                    default=["cr2", "dng", "CR2", "DNG"],
-	                    help="RAW file extensions. [Default: %(default)s]")
-	parser.add_argument("--mov-ext", action="append",
-	                    default=["mov", "mpeg", "mp4", "MOV", "MPEG", "MP4"],
+	parser.add_argument("--raw-ext", nargs="+", help="RAW file extensions. [Default: %(default)s]")
+	parser.add_argument("--mov-ext", nargs="+", default=["mov", "mpeg", "mp4", "MOV", "MPEG", "MP4"],
 	                    help="RAW file extensions. [Default: %(default)s]")
 	
 	args = parser.parse_args()
@@ -42,9 +38,9 @@ def main():
 	args = vars(args)
 	
 	for file_type in ["JPG", "RAW", "MOV"]:
-		files = filetools.get_files(args.project_dir, args["%s_ext" % file_type.lower()])
+		files = filetools.get_files(args["project_dir"], args["%s_ext" % file_type.lower()])
 		
-		sub_dir = os.path.join(args.project_dir, args["%s_dir" % file_type.lower()])
+		sub_dir = os.path.join(args["project_dir"], args["%s_dir" % file_type.lower()])
 		if (len(files) > 0) and (not os.path.exists(sub_dir)):
 			os.makedirs(sub_dir)
 		for file in progressiterator.ProgressIterator(files, description="Move %s files" % file_type):

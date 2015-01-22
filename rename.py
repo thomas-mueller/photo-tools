@@ -19,13 +19,11 @@ def main():
 	
 	parser.add_argument("-j", "--jpg-dir", required=True,
 	                    help="Directory containing JPG photos.")
-	parser.add_argument("--jpg-ext", action="append",
-	                    default=["jpg", "jpeg", "JPG", "JPEG"],
+	parser.add_argument("--jpg-ext", nargs="+", default=["jpg", "jpeg", "JPG", "JPEG"],
 	                    help="JPG file extensions. [Default: %(default)s]")
 	parser.add_argument("-r", "--raw-dir",
 	                    help="Directory containing RAW photos.")
-	parser.add_argument("--raw-ext", action="append",
-	                    default=["cr2", "dng", "CR2", "DNG"],
+	parser.add_argument("--raw-ext", nargs="+", default=["cr2", "dng", "CR2", "DNG"],
 	                    help="RAW file extensions. [Default: %(default)s]")
 	parser.add_argument("-e", "--exif-date-tag", default="DateTimeOriginal",
 	                    help="Exif tag for date of creation. [Default: %(default)s]")
