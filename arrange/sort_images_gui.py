@@ -15,6 +15,7 @@ class ImageSortGui(ImageViewerBase):
 	def __init__(self, options, args):
 		self.options = options
 		inputFiles = sum(map(lambda arg: glob.glob(os.path.join(arg, "*")) if os.path.isdir(arg) else [arg], args), [])
+		inputFiles = [os.path.abspath(inputFile) for inputFile in inputFiles]
 		inputFiles.sort()
 		
 		super(ImageSortGui, self).__init__(inputFiles, "Image Sort Tool")
@@ -118,38 +119,57 @@ class ImageSortGui(ImageViewerBase):
 				self.indexOccurenceMarked = self.indexOccurence
 			self.setLabel()
 	
-	def saveSortResults(self):
-		for savedSortedFile in self.savedSortedFiles: os.unlink(savedSortedFile)
-		self.savedSortedFiles = []
+	def isFilelistSaveMode(self):
+		if os.path.exists(self.options.output):
+			return (not os.path.isdir(self.options.output))
+		else:
+			return ("." in os.path.basename(self.options.output))
 	
-		if len(self.sortedFiles) > 0:
-			if not os.path.exists(self.options.output_dir): os.makedirs(self.options.output_dir)
-			nDigits = int(math.floor(math.log10(len(self.sortedFiles)))) + 1
+	def saveSortResults(self):
+		if (len(self.sortedFiles) > 0) and self.isFilelistSaveMode():
+			with open(self.options.output, "w") as output_file:
+				for sortedFile in self.sortedFiles:
+					output_file.write("\"%s\"\n" % os.path.abspath(sortedFile))
+			print "Saved filelist to \"%s\"." % self.options.output
+		else:
+			for savedSortedFile in self.savedSortedFiles: os.unlink(savedSortedFile)
+			self.savedSortedFiles = []
+	
+			if len(self.sortedFiles) > 0:
+				if not os.path.exists(self.options.output): os.makedirs(self.options.output)
+				nDigits = int(math.floor(math.log10(len(self.sortedFiles)))) + 1
 		
-			for index, sortedFile in enumerate(self.sortedFiles):
-				relSortedFile = os.path.relpath(os.path.abspath(sortedFile), os.path.abspath(self.options.output_dir))
-				symlinkTarget = os.path.join(self.options.output_dir, self.options.prefix+(str(index+1).rjust(nDigits, "0"))+"."+sortedFile.split(".")[-1])
-				print sortedFile, "-->", symlinkTarget				
-				if os.path.exists(symlinkTarget): os.unlink(symlinkTarget)
-				os.symlink(relSortedFile, symlinkTarget)
-				self.savedSortedFiles.append(os.path.join(self.options.output_dir, symlinkTarget))
+				for index, sortedFile in enumerate(self.sortedFiles):
+					relSortedFile = os.path.relpath(os.path.abspath(sortedFile), os.path.abspath(self.options.output))
+					symlinkTarget = os.path.join(self.options.output, self.options.prefix+(str(index+1).rjust(nDigits, "0"))+"."+sortedFile.split(".")[-1])
+					print sortedFile, "-->", symlinkTarget				
+					if os.path.exists(symlinkTarget): os.unlink(symlinkTarget)
+					os.symlink(relSortedFile, symlinkTarget)
+					self.savedSortedFiles.append(os.path.join(self.options.output, symlinkTarget))
 	
 	def importSortResults(self):
-		if os.path.exists(self.options.output_dir):
-			existingSymlinks = map(lambda entry: os.path.join(self.options.output_dir, entry), os.listdir(self.options.output_dir))
-			existingSymlinks = filter(lambda entry: os.path.islink(entry), existingSymlinks)
-			existingSymlinks.sort()
+		if os.path.exists(self.options.output):
+			if self.isFilelistSaveMode():
+				with open(self.options.output, "r") as output_file:
+					for line in output_file:
+						line = line.strip()
+						if line.startswith("\"") and line.endswith("\""):
+							self.sortedFiles.append(line[1:-1])
+			else:
+				existingSymlinks = map(lambda entry: os.path.join(self.options.output, entry), os.listdir(self.options.output))
+				existingSymlinks = filter(lambda entry: os.path.islink(entry), existingSymlinks)
+				existingSymlinks.sort()
 		
-			expandedExistingSortedFiles = map(lambda entry: os.path.realpath(os.path.abspath(entry)), existingSymlinks)
-			expandedInputFiles = map(lambda entry: os.path.realpath(os.path.abspath(entry)), self.inputFiles)
+				expandedExistingSortedFiles = map(lambda entry: os.path.realpath(os.path.abspath(entry)), existingSymlinks)
+				expandedInputFiles = map(lambda entry: os.path.realpath(os.path.abspath(entry)), self.inputFiles)
 		
-			for expandedExistingSortedFile in expandedExistingSortedFiles:
-				if expandedExistingSortedFile in expandedInputFiles:
-					self.sortedFiles.append(self.inputFiles[expandedInputFiles.index(expandedExistingSortedFile)])
-				else: self.sortedFiles.append(expandedExistingSortedFile)
+				for expandedExistingSortedFile in expandedExistingSortedFiles:
+					if expandedExistingSortedFile in expandedInputFiles:
+						self.sortedFiles.append(self.inputFiles[expandedInputFiles.index(expandedExistingSortedFile)])
+					else: self.sortedFiles.append(expandedExistingSortedFile)
 		
-			self.savedSortedFiles = copy.deepcopy(existingSymlinks)
-		
+				self.savedSortedFiles = copy.deepcopy(existingSymlinks)
+	
 	def keyPressEvent(self, event):
 		# http://qt-project.org/doc/qt-4.8/qt.html#Key-enum
 		if event.key() == QtCore.Qt.Key_Enter or event.key() == QtCore.Qt.Key_Return: self.insertFile(True)
@@ -188,7 +208,7 @@ def main():
 	parser = OptionParser(usage="usage: %prog [options] <DIRECTORY1 | FILE1> ...",
 						  description="Sort images and create alphabetical symlinks. Press H to get a list of all shortcuts.")
 
-	parser.add_option("-o", "--output-dir", help="Output directory.")
+	parser.add_option("-o", "--output", help="Output file (for filelist) or directory (for symlinks).")
 	parser.add_option("--prefix", default="a_", help="Prefix for sorted files. [Default: a_]")
 
 	(options, args) = parser.parse_args()
@@ -199,14 +219,8 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 	
-	if not options.output_dir:
+	if not options.output:
 		print "ERROR: no output directory specified!"
-		print ""
-		parser.print_help()
-		sys.exit(1)
-	
-	if os.path.exists(options.output_dir) and not os.path.isdir(options.output_dir):
-		print "ERROR:", options.output_dir, "is not a directory!"
 		print ""
 		parser.print_help()
 		sys.exit(1)
