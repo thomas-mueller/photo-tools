@@ -63,6 +63,10 @@ class ImageViewerBase(QtGui.QGraphicsView):
 			if not self.isLoading: self.loadNextInput(self.indexInputFile + 10)
 		elif event.key() == QtCore.Qt.Key_P:
 			if not self.isLoading: self.loadNextInput(self.indexInputFile - 10)
+		if event.key() == QtCore.Qt.Key_A:
+			if not self.isLoading: self.loadNextInput(self.indexInputFile + 100)
+		elif event.key() == QtCore.Qt.Key_B:
+			if not self.isLoading: self.loadNextInput(self.indexInputFile - 100)
 		elif event.key() == QtCore.Qt.Key_F11:
 			if self.windowState() == QtCore.Qt.WindowFullScreen:
 				self.setWindowState(QtCore.Qt.WindowNoState)
