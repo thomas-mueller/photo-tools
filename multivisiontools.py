@@ -10,22 +10,29 @@ import os
 import shlex
 import tempfile
 
+import filecache
 import phototools
 import progressiterator
 import tools
 
 
 class Multivision(object):
-	def __init__(self, frame_rate=25.0, resolution=(1920, 1080), video_format="mp4"):
+	def __init__(self, frame_rate=25.0, resolution=(1920, 1080), video_format=".mp4"):
 		self.frame_rate = frame_rate
 		self.resolution = resolution
 		self.video_format = video_format
 	
+	def __str__(self):
+		return "Multivision(%f, (%d, %d), %s)" % (
+				self.frame_rate,
+				self.resolution[0], self.resolution[1],
+				self.video_format
+		)
 	
 	def _check_output_video_file(self, video_file=None):
 		checked_video_file = video_file
 		if checked_video_file is None:
-			checked_video_file = tempfile.mkstemp(prefix="phototools_", suffix="."+self.video_format)[1]
+			checked_video_file = tempfile.mkstemp(prefix="phototools_", suffix=self.video_format)[1]
 		if os.path.exists(checked_video_file):
 			os.remove(checked_video_file)
 		return checked_video_file
@@ -44,7 +51,11 @@ class Multivision(object):
 		return prepared_image_file
 	
 	
-	def image_transition_to_video(self, image_file1, image_file2, transition_time=1.0, video_file=None):
+	@filecache.FileProducerCache()
+	def image_transition_to_video(self, image_file1, image_file2, transition_time=1.0, video_file=None, output_file_extension=".mp4"):
+		# needed for caching
+		self.video_format = output_file_extension
+	
 		# determine video file
 		video_file = self._check_output_video_file(video_file)
 		
@@ -76,8 +87,12 @@ class Multivision(object):
 		return video_file
 	
 	
-	def image_to_video(self, image_file, duration=1.0, video_file=None):
-		return self.image_transition_to_video(image_file, image_file, transition_time=duration, video_file=video_file)
+	@filecache.FileProducerCache()
+	def image_to_video(self, image_file, duration=1.0, video_file=None, output_file_extension=".mp4"):
+		# needed for caching
+		self.video_format = output_file_extension
+		
+		return Multivision.image_transition_to_video(self, image_file, image_file, transition_time=duration, video_file=video_file, output_file_extension=output_file_extension)
 	
 	
 	def concatenate_videos(self, video_files, concatenated_video_file=None):
@@ -117,14 +132,14 @@ class Multivision(object):
 		
 		# create image videos
 		image_videos = [
-				self.image_to_video(image_file, duration)
+				Multivision.image_to_video(self, image_file, duration, output_file_extension=self.video_format)
 				for image_file, duration
 				in progressiterator.ProgressIterator(zip(image_files, image_durations), description="Process images")
 		]
 		
 		# create transition videos
 		transition_videos = [
-				self.image_transition_to_video(image_file1, image_file2, transition_time)
+				Multivision.image_transition_to_video(self, image_file1, image_file2, transition_time, output_file_extension=self.video_format)
 				for image_file1, image_file2, transition_time
 				in progressiterator.ProgressIterator(zip(image_files[:-1], image_files[1:], transition_times), description="Process image transitions")
 		]
@@ -135,8 +150,8 @@ class Multivision(object):
 		self.concatenate_videos(video_files, concatenated_video_file=video_file)
 		
 		# remove temporary files
-		for temporary_file in temporary_files:
-			os.remove(temporary_file)
+		#for temporary_file in temporary_files:
+		#	os.remove(temporary_file)
 		
 		# return video file
 		return video_file
