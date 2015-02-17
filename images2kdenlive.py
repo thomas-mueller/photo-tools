@@ -26,6 +26,8 @@ def main():
 	
 	kdenliveProject = kdenlivetools.KdenliveProject(args.kdenlive_template)
 	
+	kdenliveProject.add_images(args.images)
+	
 	kdenliveProject.save(args.output)
 	log.info("Created Kdenlive project \"%s\" from %d images." % (args.output, len(args.images)))
 	
