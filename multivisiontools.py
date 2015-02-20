@@ -53,6 +53,13 @@ class Multivision(object):
 	
 	@filecache.FileProducerCache()
 	def image_transition_to_video(self, image_file1, image_file2, transition_time=1.0, video_file=None, output_file_extension=".mp4"):
+		if transition_time == 0.0:
+			return "None"
+		
+		n_frames = int(transition_time * self.frame_rate)
+		if n_frames == 0:
+			return "None"
+		
 		# needed for caching
 		self.video_format = output_file_extension
 	
@@ -67,7 +74,7 @@ class Multivision(object):
 		# morph transtion frames
 		prepared_image_file_info = os.path.splitext(prepared_image_file1)
 		morphed_files = "%s_morphed%s%s" % (prepared_image_file_info[0], "%05d", prepared_image_file_info[1])
-		n_frames = int(transition_time * self.frame_rate)
+		
 		command = "convert %s %s -morph %d %s" % (
 				prepared_image_file1, prepared_image_file2,
 				n_frames-2, morphed_files
@@ -89,6 +96,9 @@ class Multivision(object):
 	
 	@filecache.FileProducerCache()
 	def image_to_video(self, image_file, duration=1.0, video_file=None, output_file_extension=".mp4"):
+		if duration == 0.0:
+			return "None"
+		
 		# needed for caching
 		self.video_format = output_file_extension
 		
@@ -148,6 +158,7 @@ class Multivision(object):
 		
 		# concatenate videos
 		video_files = tools.flatten(zip(image_videos[:-1], transition_videos))+[image_videos[-1]]
+		video_files = [v for v in video_files if v != "None"]
 		temporary_files = video_files
 		self.concatenate_videos(video_files, concatenated_video_file=video_file)
 		
