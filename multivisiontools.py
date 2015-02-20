@@ -103,10 +103,12 @@ class Multivision(object):
 		videos_list_file = tempfile.mkstemp(prefix="phototools_", suffix=".txt")[1]
 		temporary_files = [videos_list_file]
 		with open(videos_list_file, "w") as videos_list:
-			videos_list.write("\n".join(["file '%s'" % v for v in video_files]))
+			videos_list.write("\n".join(["file '%s'" % os.path.abspath(v) for v in video_files]))
 		
 		# concatenate videos
-		command = "ffmpeg -loglevel quiet -f concat -i %s -c copy %s" % (videos_list_file, concatenated_video_file)
+		command = "ffmpeg -f concat -i %s -c copy %s" % (videos_list_file, concatenated_video_file)
+		if not log.isEnabledFor(logging.DEBUG):
+			command += " -loglevel quiet"
 		logger.subprocessCall(shlex.split(command))
 		
 		# remove temporary files
