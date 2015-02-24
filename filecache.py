@@ -48,7 +48,7 @@ class FileCache(Cache):
 			os.makedirs(cache_dir)
 		return os.path.join(cache_dir, args_hash)
 	
-	def _get_cached(self, input_file, *args, **kwargs):
+	def _get_cached(self, *args, **kwargs):
 		cache_file = self._determine_cache_file(*args, **kwargs)
 		if os.path.exists(cache_file):
 			with open(cache_file, "r") as cache:
