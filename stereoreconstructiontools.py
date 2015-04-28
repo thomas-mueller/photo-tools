@@ -33,6 +33,16 @@ class PhotoObject(object):
 				position=self.position, value=self.value
 		)
 
+class Pixel(object):
+	def __init__(self, index, value=0.0):
+		self.index = index
+		self.value = value
+	
+	def __str__(self):
+		return "Pixel (index = {index:5d}, value = {value:8.2f})".format(
+				index=self.index, value=self.value
+		)
+
 class Reality(object):
 	def __init__(self, real_objects):
 		self.real_objects = real_objects
@@ -43,6 +53,7 @@ class Reality(object):
 				n=len(self.real_objects), objects="\n\t".join([str(real_object) for real_object in self.real_objects])
 		)
 
+"""
 class Photo(object):
 	def __init__(self, camera, reality):
 		self.photo_objects = camera.to_photo_objects(reality)
@@ -51,6 +62,17 @@ class Photo(object):
 	def __str__(self):
 		return "Photo ({n} objects):\n\t{objects}".format(
 				n=len(self.photo_objects), objects="\n\t".join([str(photo_object) for photo_object in self.photo_objects])
+		)
+"""
+class Photo(object):
+	def __init__(self, pixels):
+		self.pixels = [Pixel(index) for index in xrange(max([pixel.index for pixels in pixels])+1)]
+		for pixel in pixels[::-1]:
+			self.pixels[pixel.index] = pixel
+	
+	def __str__(self):
+		return "Photo ({n} pixels):\n\t{objects}".format(
+				n=len(self.pixels), objects="\n\t".join([str(pixel) for pixel in self.pixels])
 		)
 
 class Camera(object):
@@ -156,7 +178,7 @@ def main():
 	print real_object2
 	"""
 	
-	reality = Reality([RealObject(index*10.0, 100, index) for index in xrange(-5, 6, 1)]+[RealObject(index*10.0, 200, index+100) for index in xrange(-5, 6, 1)])
+	reality = Reality([RealObject(index*10.0, 100, abs(index)) for index in xrange(-5, 6, 1)]+[RealObject(index*10.0, 200, abs(index+100)) for index in xrange(-5, 6, 1)])
 	photo1 = Photo(camera1, reality)
 	photo2 = Photo(camera2, reality)
 	
