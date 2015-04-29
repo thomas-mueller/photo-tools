@@ -9,7 +9,14 @@ import argparse
 import numpy
 import os
 from PIL import Image, ImageChops
+import ROOT
 import shutil
+
+
+
+def save_image(image, filename):
+	image.save(filename)
+	log.info("Saved image \"{image}\".".format(image=filename))
 
 
 def get_ratio_images(image1, image2):
@@ -30,11 +37,35 @@ def get_ratio_images(image1, image2):
 	
 	ratio_data_array = numpy.reshape(numpy.array(ratio_data, dtype=numpy.uint8), tuple(list(image1.size)[::-1]+([len(ratio_data[0])] if type(ratio_data[0])==tuple else [])))
 	ratio_image = Image.fromarray(ratio_data_array, mode=image1.mode)
-	return ratio_image
+	return ratio_image, ratio_image.point(lambda x: 255-x)
 
-def save_image(image, filename):
-	image.save(filename)
-	log.info("Saved image \"{image}\".".format(image=filename))
+
+def get_fft_image(image):
+	gray_image = image.convert("L")
+	image_data = numpy.array(gray_image.getdata(), dtype=numpy.uint8).reshape(gray_image.size[::-1])
+	fft = numpy.fft.fft2(image_data)
+	fft[0, 0] = 0
+	abs_shifted_fft = numpy.abs(numpy.fft.fftshift(fft))
+	return Image.fromarray(numpy.array(abs_shifted_fft * (255.0 / numpy.amax(abs_shifted_fft)), dtype=numpy.uint8), mode=gray_image.mode)
+
+
+def get_fft_histogram(image, root_directory, name):
+	gray_image = image.convert("L")
+	image_data = numpy.array(gray_image.getdata(), dtype=numpy.uint8).reshape(gray_image.size[::-1])
+	shifted_fft = numpy.fft.fftshift(numpy.fft.fft2(image_data))
+	
+	def _to_histogram(array, name):
+		histogram = ROOT.TH2F(name, "", gray_image.size[0]-1, 0.0, gray_image.size[0]-1, gray_image.size[1]-1, 0.0, gray_image.size[1]-1)
+		for x_index in xrange(gray_image.size[0]-1):
+			for y_index in xrange(gray_image.size[1]-1):
+				histogram.SetBinContent(x_index+1, y_index+1, array[y_index, x_index])
+		return histogram
+	
+	root_directory.cd()
+	histograms = [_to_histogram(array, name+"_"+prefix) for array, prefix in [[numpy.abs(shifted_fft), "abs"], [numpy.angle(shifted_fft), "arg"], [numpy.real(shifted_fft), "re"], [numpy.imag(shifted_fft), "im"]]]
+	for histogram in histograms:
+		histogram.Write()
+	return histograms
 
 
 def main():
@@ -76,6 +107,9 @@ def main():
 		os.makedirs(args.output_dir)
 		log.info("Created \"{output}\".".format(output=args.output_dir))
 	
+	root_output_filename = os.path.join(args.output_dir, "output.root")
+	root_output_file = ROOT.TFile(root_output_filename, "RECREATE")
+	
 	# copy inputs
 	left_extension = os.path.splitext(args.input_left)[-1]
 	left_output_filename =  os.path.join(args.output_dir, "01_left"+left_extension)
@@ -105,15 +139,41 @@ def main():
 	gray_superposition_filename =  os.path.join(args.output_dir, "03_gray_superposition"+left_extension)
 	save_image(gray_superposition_image, gray_superposition_filename)
 	
-	# ratio images
-	ratio_image = get_ratio_images(left_image, right_image)
-	ratio_filename =  os.path.join(args.output_dir, "04_ratio"+left_extension)
-	save_image(ratio_image, ratio_filename)
+	# FFT of superpositions
+	get_fft_histogram(gray_superposition_image, root_output_file, "superposition_fft")
+	gray_superposition_fft_image = get_fft_image(gray_superposition_image)
+	gray_superposition_fft_filename =  os.path.join(args.output_dir, "03_gray_superposition_fft"+left_extension)
+	save_image(gray_superposition_fft_image, gray_superposition_fft_filename)
 	
-	gray_ratio_image = get_ratio_images(gray_left_image, gray_right_image)
-	gray_ratio_filename =  os.path.join(args.output_dir, "04_gray_ratio"+left_extension)
-	save_image(gray_ratio_image, gray_ratio_filename)
-
+	# ratio images
+	left_ratio_image, right_ratio_image = get_ratio_images(left_image, right_image)
+	left_ratio_filename =  os.path.join(args.output_dir, "04_left_ratio"+left_extension)
+	save_image(left_ratio_image, left_ratio_filename)
+	right_ratio_filename =  os.path.join(args.output_dir, "04_right_ratio"+right_extension)
+	save_image(right_ratio_image, right_ratio_filename)
+	
+	# grayscale ratio images
+	gray_left_ratio_image, gray_right_ratio_image = get_ratio_images(gray_left_image, gray_right_image)
+	gray_left_ratio_filename =  os.path.join(args.output_dir, "05_gray_left_ratio"+left_extension)
+	save_image(gray_left_ratio_image, gray_left_ratio_filename)
+	
+	gray_right_ratio_filename =  os.path.join(args.output_dir, "05_gray_right_ratio"+right_extension)
+	save_image(gray_right_ratio_image, gray_right_ratio_filename)
+	
+	# FFT of superpositions
+	get_fft_histogram(gray_left_ratio_image, root_output_file, "left_ratio_fft")
+	gray_left_ratio_fft_image = get_fft_image(gray_left_ratio_image)
+	gray_left_ratio_fft_filename =  os.path.join(args.output_dir, "05_gray_left_ratio_fft"+left_extension)
+	save_image(gray_left_ratio_fft_image, gray_left_ratio_fft_filename)
+	
+	get_fft_histogram(gray_right_ratio_image, root_output_file, "right_ratio_fft")
+	gray_right_ratio_fft_image = get_fft_image(gray_right_ratio_image)
+	gray_right_ratio_fft_filename =  os.path.join(args.output_dir, "05_gray_right_ratio_fft"+right_extension)
+	save_image(gray_right_ratio_fft_image, gray_right_ratio_fft_filename)
+	
+	#root_output_file.Write()
+	root_output_file.Close()
+	log.info("Saved ROOT output \"{output}\".".format(output=root_output_filename))
 
 if __name__ == "__main__":
 	main()
