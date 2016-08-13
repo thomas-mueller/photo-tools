@@ -29,9 +29,10 @@ def main():
 	
 	parser.add_argument("--jpg-ext", nargs="+", default=["jpg", "jpeg", "JPG", "JPEG"],
 	                    help="JPG file extensions. [Default: %(default)s]")
-	parser.add_argument("--raw-ext", nargs="+", help="RAW file extensions. [Default: %(default)s]")
-	parser.add_argument("--mov-ext", nargs="+", default=["mov", "mpeg", "mp4", "MOV", "MPEG", "MP4"],
+	parser.add_argument("--raw-ext", nargs="+", default=["cr2", "CR2"],
 	                    help="RAW file extensions. [Default: %(default)s]")
+	parser.add_argument("--mov-ext", nargs="+", default=["mov", "mpeg", "mp4", "MOV", "MPEG", "MP4"],
+	                    help="MOV file extensions. [Default: %(default)s]")
 	
 	args = parser.parse_args()
 	logger.initLogger(args)
