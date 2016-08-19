@@ -48,7 +48,9 @@ def main():
 	dual_iso_images = images
 	
 	for image in progressiterator.ProgressIterator(dual_iso_images, description="Post-process dual ISO images"):
-		logger.subprocessCall(shlex.split("%s %s" % (args.cr2hdr, image)))
+		command = "%s %s" % (args.cr2hdr, image)
+		log.debug(command)
+		logger.subprocessCall(command)
 
 
 if __name__ == "__main__":
