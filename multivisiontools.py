@@ -41,7 +41,7 @@ class Multivision(object):
 	def _prepare_image(self, image_file):
 		image_file_info = os.path.splitext(os.path.basename(image_file))
 		prepared_image_file = tempfile.mkstemp(prefix=image_file_info[0]+"_", suffix=image_file_info[1])[1]
-		command = "convert %s -resize %dx%d^ -gravity center -extent %dx%d %s" % (
+		command = "convert %s -resize %dx%d^ -gravity South -extent %dx%d %s" % (
 				image_file,
 				self.resolution[0], self.resolution[1],
 				self.resolution[0], self.resolution[1],
@@ -116,7 +116,7 @@ class Multivision(object):
 			videos_list.write("\n".join(["file '%s'" % os.path.abspath(v) for v in video_files]))
 		
 		# concatenate videos
-		command = "ffmpeg -f concat -i %s -c copy %s" % (videos_list_file, concatenated_video_file)
+		command = "ffmpeg -f concat -safe 0 -i %s -c copy %s" % (videos_list_file, concatenated_video_file)
 		if not log.isEnabledFor(logging.DEBUG):
 			command += " -loglevel quiet"
 		logger.subprocessCall(shlex.split(command))

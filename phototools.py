@@ -16,24 +16,37 @@ date_format = "%Y:%m:%d %H:%M:%S"
 @filecache.MemoryCache()
 @filecache.FileCache()
 def load_exif_field(input_file, *exiftool_arguments):
-	return subprocess.check_output(["exiftool"]+list(exiftool_arguments)+["-s3", input_file]).replace("\n", "")
+	output = None
+	try:
+		output = subprocess.check_output(["exiftool"]+list(exiftool_arguments)+["-s3", input_file]).replace("\n", "")
+	except:
+		pass
+	return output
 
 
 @filecache.MemoryCache()
 @filecache.FileCache()
 def load_image_dimensions(input_file, *identify_arguments):
-	return subprocess.check_output(["identify"]+list(identify_arguments)+["-format", "%[fx:w] %[fx:h]", input_file]).replace("\n", "")
+	output = None
+	try:
+		output = subprocess.check_output(["identify"]+list(identify_arguments)+["-format", "%[fx:w] %[fx:h]", input_file]).replace("\n", "")
+	except:
+		pass
+	return output
 
 
 def is_portrait_format(input_file):
 	dimensions = load_image_dimensions(input_file)
-	dimensions = [int(dim) for dim in dimensions.split()]
-	return dimensions[0] < dimensions[1]
+	if not (dimensions is None):
+		dimensions = [int(dim) for dim in dimensions.split()]
+		return dimensions[0] < dimensions[1]
+	else:
+		return False
 
 
 def convert_date(date, date_format=date_format):
 	if isinstance(date, basestring):
-		return time.mktime(time.strptime(date, date_format))
+		return time.mktime(time.strptime(date, date_format)) if date != "" else None
 	else:
 		return time.strftime(date_format, time.localtime(date))
 
@@ -41,7 +54,7 @@ def convert_date(date, date_format=date_format):
 class FileDate(object):
 	def __init__(self, file, date):
 		self.file = file
-		self.date = int(convert_date(date) if isinstance(date, basestring) else date)
+		self.date = int(convert_date(date) if isinstance(date, basestring) else date) if date else 0
 	
 	def __lt__(self, other):
 		if self.date != other.date:
@@ -60,7 +73,8 @@ class FileDate(object):
 		files_dates = []
 		for file in progressiterator.ProgressIterator(files, description="Load EXIF date infos"):
 			date = load_exif_field(file, *["-d", date_format, "-%s" % exif_date_tag])
-			files_dates.append(FileDate(file, date))
+			if not (date is None):
+				files_dates.append(FileDate(file, date))
 		return files_dates
 
 	@staticmethod

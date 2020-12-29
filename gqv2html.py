@@ -48,7 +48,7 @@ def main():
 	template_image_html = string.Template("<div class=\"step slide photo\" data-x=\"$data_x\" data-y=\"0\" style=\"background-image:url($path);\"></div>")
 	for index, input_file in enumerate(progressiterator.ProgressIterator(input_files, description="Copy and resize files")):
 		output_file = os.path.join(args.output, name_format % (index+1, os.path.splitext(input_file)[-1]))
-		#logger.subprocessCall(shlex.split("convert %s -resize 1500x1000> %s" % (input_file, output_file)))
+		logger.subprocessCall(shlex.split("convert %s -resize 1500x1000> %s" % (input_file, output_file)))
 		
 		image_html = template_image_html.safe_substitute(data_x=str(index*1600), path=os.path.basename(output_file))
 		images_html += ("\n" + image_html)
