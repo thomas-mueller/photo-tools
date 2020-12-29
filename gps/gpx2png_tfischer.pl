@@ -64,7 +64,7 @@ my $waypointcircleradius = "auto";
 ## used in round-robin fashion
 ## tilesource==(white|transparent) overwrites this setting!
 my @drawingcolors = (
-	'#dd0000'
+	'#ff0000'
     #'#00dd00', '#0099ff', '#ff9900', '#99ff00', '#9900ff', '#ff0099',
     #'#00ff99', '#dd0000', '#0000dd', '#cccc00', '#cc00cc', '#00cccc'
 );
@@ -72,7 +72,7 @@ my @drawingcolors = (
 ## drawing style of lower layer for tracks
 ## for colors see  @drawingcolors
 ## tilesource==(white|transparent) overwrites this setting!
-my %drawingstylelowerlayer = ( linewidth => 4, fill => 'graya(0%, 0.0)' );
+my %drawingstylelowerlayer = ( linewidth => 7, fill => 'graya(0%, 0.0)' );
 
 ## drawing style of upper layer for tracks
 ## tilesource==(white|transparent) overwrites this setting!
@@ -370,6 +370,91 @@ sub parseCmdLineParam {
                 $baseurl        = undef;
                 $tilescopyright = undef;
             }
+            elsif ( $tilesource eq "OpenCycleMap" ) {
+                $tilesourcename = "OpenCycleMap";
+                $baseurl = "https://tile.thunderforest.com/cycle/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "Transport" ) {
+                $tilesourcename = "Transport";
+                $baseurl = "https://tile.thunderforest.com/transport/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "Landscape" ) {
+                $tilesourcename = "Landscape";
+                $baseurl = "https://tile.thunderforest.com/landscape/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "Outdoors" ) {
+                $tilesourcename = "Outdoors";
+                $baseurl = "https://tile.thunderforest.com/outdoors/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "TransportDark" ) {
+                $tilesourcename = "TransportDark";
+                $baseurl = "https://tile.thunderforest.com/transport-dark/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "SpinalMap" ) {
+                $tilesourcename = "SpinalMap";
+                $baseurl = "https://tile.thunderforest.com/spinal-map/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "Pioneer" ) {
+                $tilesourcename = "Pioneer";
+                $baseurl = "https://tile.thunderforest.com/pioneer/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MobileAtlas" ) {
+                $tilesourcename = "MobileAtlas";
+                $baseurl = "https://tile.thunderforest.com/mobile-atlas/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "Neighbourhood" ) {
+                $tilesourcename = "Neighbourhood";
+                $baseurl = "https://tile.thunderforest.com/neighbourhood/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerBright" ) {
+                $tilesourcename = "MaptilerBright";
+                $baseurl = "https://maps.tilehosting.com/styles/bright/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerPositron" ) {
+                $tilesourcename = "MaptilerPositron";
+                $baseurl = "https://maps.tilehosting.com/styles/positron/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerBasic" ) {
+                $tilesourcename = "MaptilerBasic";
+                $baseurl = "https://maps.tilehosting.com/styles/basic/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerTopo" ) {
+                $tilesourcename = "MaptilerTopo";
+                $baseurl = "https://maps.tilehosting.com/styles/topo/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerStreets" ) {
+                $tilesourcename = "MaptilerStreets";
+                $baseurl = "https://maps.tilehosting.com/styles/streets/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerSatelliteHybrid" ) {
+                $tilesourcename = "MaptilerSatelliteHybrid";
+                $baseurl = "https://maps.tilehosting.com/styles/hybrid/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerVoyager" ) {
+                $tilesourcename = "MaptilerVoyager";
+                $baseurl = "https://maps.tilehosting.com/styles/voyager/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
+            elsif ( $tilesource eq "MaptilerDarkMatter" ) {
+                $tilesourcename = "MaptilerDarkMatter";
+                $baseurl = "https://maps.tilehosting.com/styles/darkmatter/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
+                $tilescopyright = undef;
+            }
 
             if (   ( $tilesource eq "white" )
                 || ( $tilesource eq "transparent" ) )
@@ -454,6 +539,25 @@ sub HELP_MESSAGE {
     print "                   hillshading (transparent!)\n";
     print "                   white (no tiles, uses grayscale drawing)\n";
     print "                   transparent (no tiles, uses grayscale drawing)\n";
+    print "                   OpenCycleMap\n";
+    print "                   Transport\n";
+    print "                   Landscape\n";
+    print "                   Outdoors\n";
+    print "                   TransportDark\n";
+    print "                   SpinalMap\n";
+    print "                   Pioneer\n";
+    print "                   MobileAtlas\n";
+    print "                   Neighbourhood\n";
+    print "                Log in to https://manage.thunderforest.com/dashboard first.\n";
+    print "                   MaptilerBright\n";
+    print "                   MaptilerPositron\n";
+    print "                   MaptilerBasic\n";
+    print "                   MaptilerTopo\n";
+    print "                   MaptilerStreets\n";
+    print "                   MaptilerSatelliteHybrid\n";
+    print "                   MaptilerVoyager\n";
+    print "                   MaptilerDarkMatter\n";
+    print "                Log in to https://cloud.maptiler.com/maps/ first.\n";
     print
 "  --backgroundpostprocess MODE\n";
     print
@@ -546,8 +650,11 @@ sub getURL {
 sub getFilename {
     my ( $x, $y, $zoom ) = @_;
     my $suffix = $baseurl =~ /\.jpg$/ ? "jpg" : "png";
+    if (! -d "/tmp/tiles/") {
+    	mkdir "/tmp/tiles/"
+	}
     return
-      sprintf( $tilesprefix . "-" . $tilesourcename . "-z%03d-x%05d-y%05d.%s",
+      sprintf( "/tmp/tiles/" . $tilesprefix . "-" . $tilesourcename . "-z%03d-x%05d-y%05d.%s",
         $zoom, $x, $y, $suffix );
 }
 
@@ -873,7 +980,6 @@ sub drawTrekSegment {
     $drawingStyle{points} = $pointseries;
     my $w = $image->Draw(%drawingStyle);
     die "\n$w" if "$w";
-
     print "." if ( $quiet == 0 );
 }
 
@@ -1010,7 +1116,7 @@ sub drawAllTracks {
 
             %drawingStyle = (%drawingstyleupperlayer);
             $drawingStyle{primitive} = 'polyline';
-            drawTrekSegment( \@{$trkseg}, \%drawingStyle );
+            #drawTrekSegment( \@{$trkseg}, \%drawingStyle );
         }
 
         if ( defined($doanimate) ) {
