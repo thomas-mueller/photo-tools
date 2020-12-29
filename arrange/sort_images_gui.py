@@ -53,7 +53,7 @@ class ImageSortGui(ImageViewerBase):
 		label = ""
 		if len(self.sortedPositions()) > 0:
 			label += "<body bgcolor=\"#FFFFFF\">&nbsp;"
-			label += reduce(lambda a, b: a+", "+b, [positionLabel(index, position) for index, position in enumerate(self.sortedPositions())])
+			label += ", ".join([positionLabel(index, position) for index, position in enumerate(self.sortedPositions())])
 			label += " of " + str(numberOfImages) + "&nbsp;</body>"
 			
 			self.indexLastSorted = self.sortedPositions()[self.indexOccurence]
@@ -130,7 +130,7 @@ class ImageSortGui(ImageViewerBase):
 			with open(self.options.output, "w") as output_file:
 				for sortedFile in self.sortedFiles:
 					output_file.write("\"%s\"\n" % os.path.abspath(sortedFile))
-			print "Saved filelist to \"%s\"." % self.options.output
+			print("Saved filelist to \"%s\"." % self.options.output)
 		else:
 			for savedSortedFile in self.savedSortedFiles: os.unlink(savedSortedFile)
 			self.savedSortedFiles = []
@@ -142,7 +142,7 @@ class ImageSortGui(ImageViewerBase):
 				for index, sortedFile in enumerate(self.sortedFiles):
 					relSortedFile = os.path.relpath(os.path.abspath(sortedFile), os.path.abspath(self.options.output))
 					symlinkTarget = os.path.join(self.options.output, self.options.prefix+(str(index+1).rjust(nDigits, "0"))+"."+sortedFile.split(".")[-1])
-					print sortedFile, "-->", symlinkTarget				
+					print(sortedFile, "-->", symlinkTarget)
 					if os.path.exists(symlinkTarget): os.unlink(symlinkTarget)
 					os.symlink(relSortedFile, symlinkTarget)
 					self.savedSortedFiles.append(os.path.join(self.options.output, symlinkTarget))
@@ -185,16 +185,16 @@ class ImageSortGui(ImageViewerBase):
 		elif event.key() == QtCore.Qt.Key_S: self.saveSortResults()
 		elif event.key() == QtCore.Qt.Key_Q: super(ImageSortGui, self).close()
 		elif event.key() == QtCore.Qt.Key_H or event.key() == QtCore.Qt.Key_Question:
-			print ""
-			print "Press Enter/Return to insert current image at the end of the sequence."
-			print "Press Zero to insert current image at the beginning of the sequence."
-			print "Press Delete to delete current image from the sequence."
-			print "Press Left/Right to shift current occurence in case this image was added multiple times to the sequence."
-			print "Press Plus/Minus to shift position of the current image in the sequence."
-			print "Press M to toggle the marked state of the current occurence. In case an image is marked, insertions/deletions are made before/after this occurence"
-			print "Press S to save current sequence to the output directory."
-			print "Press Q to quit without saving."
-			print ""
+			print("")
+			print("Press Enter/Return to insert current image at the end of the sequence.")
+			print("Press Zero to insert current image at the beginning of the sequence.")
+			print("Press Delete to delete current image from the sequence.")
+			print("Press Left/Right to shift current occurence in case this image was added multiple times to the sequence.")
+			print("Press Plus/Minus to shift position of the current image in the sequence.")
+			print("Press M to toggle the marked state of the current occurence. In case an image is marked, insertions/deletions are made before/after this occurence")
+			print("Press S to save current sequence to the output directory.")
+			print("Press Q to quit without saving.")
+			print("")
 		else: super(ImageSortGui, self).keyPressEvent(event)
 		
 	def closeEvent(self, event):
@@ -214,14 +214,14 @@ def main():
 	(options, args) = parser.parse_args()
 	
 	if len(args) < 1:
-		print "ERROR: no inputs specified!"
-		print ""
+		print("ERROR: no inputs specified!")
+		print("")
 		parser.print_help()
 		sys.exit(1)
 	
 	if not options.output:
-		print "ERROR: no output directory specified!"
-		print ""
+		print("ERROR: no output directory specified!")
+		print("")
 		parser.print_help()
 		sys.exit(1)
 	
