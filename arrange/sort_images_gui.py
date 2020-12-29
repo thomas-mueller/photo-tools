@@ -3,7 +3,7 @@
 
 from optparse import OptionParser
 import copy, glob, math, os, subprocess, sys, tempfile
-from PySide import QtGui, QtCore
+from PySide6 import QtCore, QtWidgets
 
 from image_viewer_base import ImageViewerBase
 
@@ -27,7 +27,7 @@ class ImageSortGui(ImageViewerBase):
 		self.indexOccurenceMarked = None
 		self.savedSortedFiles = []
 		
-		self.graphicsTextItem = QtGui.QGraphicsTextItem()
+		self.graphicsTextItem = QtWidgets.QGraphicsTextItem()
 		font = self.graphicsTextItem.font()
 		font.setPixelSize(0.1 * self.height())
 		self.graphicsTextItem.setFont(font)
@@ -225,7 +225,7 @@ def main():
 		parser.print_help()
 		sys.exit(1)
 	
-	application = QtGui.QApplication(sys.argv)
+	application = QtWidgets.QApplication(sys.argv)
 	imageSortGui = ImageSortGui(options, args)
 	
 	return application.exec_()

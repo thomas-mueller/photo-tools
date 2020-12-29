@@ -1,12 +1,12 @@
 #! /usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from PySide import QtGui, QtCore
+from PySide6 import QtGui, QtCore, QtWidgets
 
 
 
 ###################################################################################################
-class ImageViewerBase(QtGui.QGraphicsView):
+class ImageViewerBase(QtWidgets.QGraphicsView):
 	
 	def __init__(self, inputFiles=[], windowTitleBase="Image Viewer"):
 		super(ImageViewerBase, self).__init__()
@@ -20,10 +20,10 @@ class ImageViewerBase(QtGui.QGraphicsView):
 		
 		self.setBackgroundBrush(QtGui.QBrush(QtCore.Qt.NoBrush))
 		
-		self.graphicsScene = QtGui.QGraphicsScene()
+		self.graphicsScene = QtWidgets.QGraphicsScene()
 		self.setScene(self.graphicsScene)
 		
-		self.graphicsPixmapItem = QtGui.QGraphicsPixmapItem()
+		self.graphicsPixmapItem = QtWidgets.QGraphicsPixmapItem()
 		self.graphicsScene.addItem(self.graphicsPixmapItem)
 		
 		#self.loadNextInput()
