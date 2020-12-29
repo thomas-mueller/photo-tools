@@ -7,6 +7,7 @@ log = logging.getLogger(__name__)
 
 import argparse
 import numpy
+import re
 
 import ROOT
 
@@ -15,14 +16,14 @@ import progressiterator
 
 
 def main():
-	parser = argparse.ArgumentParser(description="Convert set of images into video.", parents=[logger.loggingParser])
+	parser = argparse.ArgumentParser(description="Write EXIF stats to ROOT file.", parents=[logger.loggingParser])
 	
 	parser.add_argument("images", nargs="+",
 	                    help="Image files.")
 	parser.add_argument("-e", "--exif-tags", nargs="+", default=[],
 	                    help="Exif tags to retrieve. [Default: %(default)s]")
-	parser.add_argument("-r", "--reg-exps", nargs="+", default=[None],
-	                    help="Regular expressions to retrieve values from exif infos. [Default: %(default)s]")
+#	parser.add_argument("-r", "--reg-exps", nargs="+", default=[None],
+#	                    help="Regular expressions to retrieve values from exif infos. [Default: %(default)s]")
 	parser.add_argument("-b", "--branch-names", nargs="+", default=[None],
 	                    help="Names for branches. [Default: %(default)s]")
 	parser.add_argument("-o", "--output", default="exif-stats.root",
@@ -40,9 +41,10 @@ def main():
 		tree.Branch(branch_name, values[-1], branch_name+"/D")
 	
 	for image in progressiterator.ProgressIterator(args.images, description="Processing images"):
-		for index, (exif_tag, reg_exp) in enumerate(zip(args.exif_tags, args.reg_exps)):
+#		for index, (exif_tag, reg_exp) in enumerate(zip(args.exif_tags, args.reg_exps)):
+		for index, exif_tag in enumerate(args.exif_tags):
 			exif_result = phototools.load_exif_field(image, *["-d", "%Y:%m:%d %H:%M:%S", "-"+exif_tag])
-			values[index][0] = float(exif_result.replace("mm", "").strip())
+			values[index][0] = float(eval(re.sub(r"mm", r"", re.sub(r"^1/", r"1.0/", exif_result)).strip()))
 		tree.Fill()
 	
 	root_file.Write()
