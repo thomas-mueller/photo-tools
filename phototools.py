@@ -5,6 +5,7 @@ import math
 import os
 import subprocess
 import time
+import tqdm
 
 import filecache
 import progressiterator
@@ -18,7 +19,7 @@ date_format = "%Y:%m:%d %H:%M:%S"
 def load_exif_field(input_file, *exiftool_arguments):
 	output = None
 	try:
-		output = subprocess.check_output(["exiftool"]+list(exiftool_arguments)+["-s3", input_file]).replace("\n", "")
+		output = subprocess.check_output(["exiftool"]+list(exiftool_arguments)+["-s3", input_file]).decode("utf-8").replace("\n", "")
 	except:
 		pass
 	return output
@@ -29,7 +30,7 @@ def load_exif_field(input_file, *exiftool_arguments):
 def load_image_dimensions(input_file, *identify_arguments):
 	output = None
 	try:
-		output = subprocess.check_output(["identify"]+list(identify_arguments)+["-format", "%[fx:w] %[fx:h]", input_file]).replace("\n", "")
+		output = subprocess.check_output(["identify"]+list(identify_arguments)+["-format", "%[fx:w] %[fx:h]", input_file]).decode("utf-8").replace("\n", "")
 	except:
 		pass
 	return output
@@ -45,7 +46,7 @@ def is_portrait_format(input_file):
 
 
 def convert_date(date, date_format=date_format):
-	if isinstance(date, basestring):
+	if isinstance(date, str):
 		return time.mktime(time.strptime(date, date_format)) if date != "" else None
 	else:
 		return time.strftime(date_format, time.localtime(date))
@@ -54,7 +55,7 @@ def convert_date(date, date_format=date_format):
 class FileDate(object):
 	def __init__(self, file, date):
 		self.file = file
-		self.date = int(convert_date(date) if isinstance(date, basestring) else date) if date else 0
+		self.date = int(convert_date(date) if isinstance(date, str) else date) if date else 0
 	
 	def __lt__(self, other):
 		if self.date != other.date:
@@ -71,7 +72,8 @@ class FileDate(object):
 	@staticmethod
 	def get_files_dates(files, exif_date_tag):
 		files_dates = []
-		for file in progressiterator.ProgressIterator(files, description="Load EXIF date infos"):
+#		for file in progressiterator.ProgressIterator(files, description="Load EXIF date infos"):
+		for file in tqdm.tqdm(files, desc="Get file dates..."):
 			date = load_exif_field(file, *["-d", date_format, "-%s" % exif_date_tag])
 			if not (date is None):
 				files_dates.append(FileDate(file, date))

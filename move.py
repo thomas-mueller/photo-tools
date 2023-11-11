@@ -44,7 +44,8 @@ def main():
 		sub_dir = os.path.join(args["project_dir"], args["%s_dir" % file_type.lower()])
 		if (len(files) > 0) and (not os.path.exists(sub_dir)):
 			os.makedirs(sub_dir)
-		for file in progressiterator.ProgressIterator(files, description="Move %s files" % file_type):
+#		for file in progressiterator.ProgressIterator(files, description="Move %s files" % file_type):
+		for file in files:
 			os.rename(file, os.path.join(sub_dir, os.path.basename(file)))
 
 

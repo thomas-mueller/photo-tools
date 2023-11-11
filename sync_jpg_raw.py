@@ -11,7 +11,7 @@ import os
 
 import filetools
 import phototools
-import progressiterator
+import tqdm
 
 
 def main():
@@ -56,10 +56,10 @@ def main():
 		for file in only_jpg_files + only_raw_files:
 			log.info(file)
 	if "rm_jpg" in args.modes:
-		for file in progressiterator(only_jpg_files, description="Remove supernumerous JPG files"):
+		for file in tqdm.tqdm(only_jpg_files, desc="Remove supernumerous JPG files"):
 			os.remove(file)
 	if "rm_raw" in args.modes:
-		for file in progressiterator(only_raw_files, description="Remove supernumerous RAW files"):
+		for file in tqdm.tqdm(only_raw_files, desc="Remove supernumerous RAW files"):
 			os.remove(file)
 
 

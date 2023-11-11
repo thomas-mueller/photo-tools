@@ -10,7 +10,7 @@ import math
 import os
 import shutil
 
-import progressiterator
+#import progressiterator
 
 
 def main():
@@ -43,7 +43,7 @@ def main():
 	
 	name_format = args.name + "_%0" + str(int(math.floor(math.log10(len(input_files))))+1) + "d%s"
 	
-	for index, input_file in enumerate(progressiterator.ProgressIterator(input_files, description="Create files")):
+	for index, input_file in enumerate(input_files):
 		output_file = os.path.join(args.output, name_format % (index+1, os.path.splitext(input_file)[-1]))
 		if args.copy:
 			shutil.copy(input_file, output_file)

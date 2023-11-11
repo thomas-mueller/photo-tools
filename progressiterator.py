@@ -44,7 +44,7 @@ class ProgressIterator(object):
 		self.current_index += 1
 		try:
 			return self.iterator.next()
-		except StopIteration, e:
+		except StopIteration as e:
 			sys.stdout.write("\r\033[J")
 			sys.stdout.flush()
 			raise StopIteration(e)

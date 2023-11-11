@@ -30,10 +30,10 @@ class MemoryCache(Cache):
 
 class FileCache(Cache):
 	def _determine_cache_file(self, *args, **kwargs):
-		args_hash = hashlib.md5("".join([str(a) for a in args])).hexdigest()
+		args_hash = hashlib.md5(str(args).encode("utf-8")).hexdigest()
 		
-		for arg in list(args) + kwargs.keys():
-			if isinstance(arg, basestring) and os.path.exists(arg):
+		for arg in list(args) + list(kwargs.keys()):
+			if isinstance(arg, str) and os.path.exists(arg):
 				directory = os.path.dirname(arg)
 				filename, extension = os.path.splitext(os.path.basename(arg))
 				extension = kwargs.get("output_file_extension", extension)

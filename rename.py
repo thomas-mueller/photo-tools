@@ -11,7 +11,7 @@ import os
 
 import filetools
 import phototools
-import progressiterator
+import tqdm
 
 
 def main():
@@ -42,8 +42,7 @@ def main():
 	files_dates.sort()
 	
 	rename_files = phototools.FileDate.rename_files(files_dates, args.name)
-	for original_file, new_file in progressiterator.ProgressIterator(rename_files,
-	                                                                 description="Rename files"):
+	for original_file, new_file in tqdm.tqdm(rename_files, desc="Rename files"):
 		os.rename(original_file, new_file)
 
 
