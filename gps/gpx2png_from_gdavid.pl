@@ -1,6 +1,6 @@
-#!/usr/bin/perl
-
+#!/usr/bin/env perl
 ## Copyright 2009-2014 Thomas Fischer <fischer@unix-ag.uni-kl.de>
+## Copyright 2020 Grégory David <dev@groolot.net>
 
 ##  This Perl script is free software: you can redistribute it and/or modify
 ##  it under the terms of the GNU General Public License as published by
@@ -15,12 +15,17 @@
 ##  You should have received a copy of the GNU General Public License
 ##  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+use File::Path;
+use File::Spec::Functions;
 use Math::Trig;
 use Image::Magick;
 use LWP::UserAgent;
 use Getopt::Long qw(:config no_ignore_case);
 use strict;
 use warnings;
+
+## tiles dirname, can be set with   -T DIRNAME
+my $outputtilesdirname = "./tiles";
 
 ## output filename, can be set with  -o FILENAME
 my $outputfilename = "map.png";
@@ -41,6 +46,9 @@ my $sparse = 0;
 ## quiet flag, can be set with  -q
 my $quiet = 0;
 
+## nowaypoint flag, can be set with -N
+my $nowaypoint = 0;
+
 ## additional "invisible" waypoints: coordinates that
 ## are forced to be included in the map, but are not
 ## shown or visualized in any way; useful to span
@@ -52,7 +60,7 @@ my @invisiblewptlist = ();
 ## maximum number of tiles used in autozoom mode
 ## can be set with  -a N
 ## setting parameter -a forces autozoom
-my $maxnumautotiles = 32;
+my $maxnumautotiles = 64;
 
 ## additional border tiles
 my $additionalborder = 0;
@@ -60,22 +68,34 @@ my $additionalborder = 0;
 ## radius for waypoint circles
 my $waypointcircleradius = "auto";
 
+## color for waypoint
+my $waypointcolor = "#ff0000";
+
 ## colors used for drawing tracks
 ## used in round-robin fashion
 ## tilesource==(white|transparent) overwrites this setting!
 my @drawingcolors = (
-    #'#f8ca00'
-    #'#ce1127'
-    '#31eed8'
-	#'#ff0000'
-    #'#00dd00', '#0099ff', '#ff9900', '#99ff00', '#9900ff', '#ff0099',
-    #'#00ff99', '#dd0000', '#0000dd', '#cccc00', '#cc00cc', '#00cccc'
+#    '#cccc00aa', ## yellow
+#    '#050a30aa', ## dark blue
+#    '#00ff99aa', ## acid green
+#    '#9900ffaa', ## purple
+#    '#cc9622aa', ## sand
+#    '#777777aa', ## gray
+#    '#ff0099aa', ## pink
+#    '#0000ddaa', ## blue
+#    '#dd0000aa', ## red
+#    '#00ccccaa', ## turquoise
+#    '#000000aa', ## black
+    '#C8102Eaa', ## Egypt red
+#    '#FFFFFFaa', ## Egypt white
+#    '#C09300aa', ## Egypt yellow
+#    '#000000aa', ## Egypt black
 );
 
 ## drawing style of lower layer for tracks
 ## for colors see  @drawingcolors
 ## tilesource==(white|transparent) overwrites this setting!
-my %drawingstylelowerlayer = ( linewidth => 7, fill => 'graya(0%, 0.0)' );
+my %drawingstylelowerlayer = ( linewidth => 8, fill => 'graya(0%, 0.0)' );
 
 ## drawing style of upper layer for tracks
 ## tilesource==(white|transparent) overwrites this setting!
@@ -101,7 +121,7 @@ my %scalestyle = (
 
 ## how to post-process the background image (all tiles)
 ## before drawing tracks on this background
-my %backgroundpostprocess = ( saturation => 30.0, brightness => 110.0 );
+my %backgroundpostprocess = ( saturation => 100.0, brightness => 100.0 );
 
 ## caching directory, where to put the tiles followed by a file prefix
 ## default is current directory, prefix is "tile"
@@ -112,16 +132,13 @@ my $baseurl        = "http://b.tile.openstreetmap.org/%d/%d/%d.png";
 my $tilesourcename = "standard";
 my $tilescopyright = "© OpenStreetMap contributors, CC BY-SA";
 
-## geocache icon from OpenClipArt
-my $geocacheiconurl =
-  "http://www.openclipart.org/image/32px/svg_to_png/1270238622.png";
-my $geocacheiconlocal = "/tmp/.geocacheicon.png";
-## text style for geocache names
-my %geocachestyle = (
-    fill       => 'graya(0%, 1.0)',
-    pointsize  => 12,
-    background => 'graya(100%, 0.6)',
-    offset     => 2
+## text style for waypoint names
+my %waypointstyle = (
+    linewidth  => 5,
+    pointsize  => 14,
+    background => 'graya(90%, 0.6)',
+    offset     => 4,
+    encoding   => 'UTF-8'
 );
 
 my $minxtile          = undef;
@@ -153,15 +170,16 @@ my $image             = undef;
 my %usedtiles         = ();
 my @photolist         = ();
 my $photosize         = 128;
-my %geocaches         = ();
+my %waypoints         = ();
 my $trackiconfilename = undef;
 my $trackicondist     = 20;
 
 $|             = 1;            # disable buffering of print/STDOUT
-$main::VERSION = "20140326";
+$main::NAME = "gpx2png";
+$main::VERSION = "20201021-rc1";
 
 my $ua = LWP::UserAgent->new(
-    agent      => "gpx2png",
+    agent      => $main::NAME,
     keep_alive => 1,
     env_proxy  => 1,
 );
@@ -180,6 +198,8 @@ sub parseCmdLineParam {
         "sparse|s" => \$sparse,
         ## set quiet flag
         "quiet|q" => \$quiet,
+        ## set tiles output dirname
+        "tilesdir|T=s" => \$outputtilesdirname,
         ## set output filename
         "output|o=s" => \$outputfilename,
         ## draw icons along a track like a dotted line
@@ -190,6 +210,8 @@ sub parseCmdLineParam {
         "thumbnailsize|J=i" => \$photosize,
         ## one or more thumbnail filenames
         "thumbnail|j=s" => \@photolist,
+        ## set nowaypoint flag
+        "nowaypoint|N" => \$nowaypoint,
         ## add an invisible waypoint
         "invisiblewaypoint|W=s" => sub {
             my $param = $_[1];
@@ -226,7 +248,7 @@ sub parseCmdLineParam {
             }
             else {
                 die
-"zoom level set but invalid; must be number in 1..16 or \"auto\"";
+                    "zoom level set but invalid; must be number in 1..16 or \"auto\"";
             }
         },
         ## set maximum number of tiles for autozoom
@@ -239,7 +261,7 @@ sub parseCmdLineParam {
             }
             else {
                 die
-"maximum number of tiles for autozoom set but invalid; must be number in 1..512";
+                    "maximum number of tiles for autozoom set but invalid; must be number in 1..512";
             }
         },
         ## set additional border tiles
@@ -253,7 +275,7 @@ sub parseCmdLineParam {
             }
             else {
                 die
-"additional border tiles set but invalid; must be number in 0..32";
+                    "additional border tiles set but invalid; must be number in 0..32";
             }
         },
         ## set cut border around drawn tracks
@@ -280,9 +302,22 @@ sub parseCmdLineParam {
             }
             else {
                 die
-"radius for waypoint circles set but invalid; must be number in 1..512 or \"auto\"";
+                    "radius for waypoint circles set but invalid; must be number in 1..512 or \"auto\"";
             }
         },
+        ## set waypoint's color
+        "waypointcolor=s" => sub {
+            my $param = $_[1];
+            if ( $param =~ /#?([[:xdigit:]]{6})/ ) {
+                $waypointcolor = "#".$1;
+            }
+            else {
+                die
+                    "waypoint's color set but invalid; must be hexadecimal number in #000000..#ffffff ('#' prefix is optional)";
+            }
+        },
+        ## stroke line width
+        "linewidth|w=i" =>  \$drawingstylelowerlayer{linewidth},
         ## post-process background tiles
         "backgroundpostprocess=s" => sub {
             my $param = $_[1];
@@ -295,72 +330,95 @@ sub parseCmdLineParam {
             elsif ( $param eq "brightgray" || $param eq "brightgrey" ) {
                 %backgroundpostprocess = ( saturation => 0.0, brightness => 110.0 );
             }
-            else {
-                %backgroundpostprocess = ( saturation => 30.0, brightness => 110.0 );
+            elsif ( $param eq "bright" ) {
+                %backgroundpostprocess = ( saturation => 50.0, brightness => 110.0 );
             }
         },
-        ## select source of images tiles
+        ## select source of images tiles # https://leaflet-extras.github.io/leaflet-providers/preview/
         "tiles|t=s" => sub {
             my $tilesource = $_[1];
+            $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
 
             if ( $tilesource eq "cyclemap" || $tilesource eq "cycle" ) {
                 $tilesourcename = "cyclemap";
                 $baseurl = "http://a.tile.opencyclemap.org/cycle/%d/%d/%d.png";
-
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
-                $tilescopyright .= "; tiles by Andy Allan and Dave Stubbs";
+                $tilescopyright .= "; tiles courtesy of Andy Allan and Dave Stubbs";
             }
             elsif ( $tilesource eq "transport" ) {
                 $tilesourcename = $tilesource;
-                $baseurl =
-                  "http://b.tile2.opencyclemap.org/transport/%d/%d/%d.png";
-
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
+                $baseurl = "http://b.tile2.opencyclemap.org/transport/%d/%d/%d.png";
                 $tilescopyright .= "; tiles courtesy of Andy Allan and Dave Stubbs";
+            }
+            elsif ( $tilesource eq "opentopo" || $tilesource eq "topo" ) {
+                $tilesourcename = "opentopo";
+                $baseurl = "https://a.tile.opentopomap.org/%d/%d/%d.png";
+                $tilescopyright .= "; tiles courtesy of OpenTopoMap, CC BY-SA";
             }
             elsif ( $tilesource eq "opnvkarte" || $tilesource eq "oepnvkarte" )
             {
                 $tilesourcename = "opnvkarte";
-                $baseurl =
-                  "http://tile.xn--pnvkarte-m4a.de/tilegen/%d/%d/%d.png";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
+                $baseurl = "http://tile.xn--pnvkarte-m4a.de/tilegen/%d/%d/%d.png";
                 $tilescopyright .= "; tiles courtesy of Melchior Moos";
             }
-            elsif ( $tilesource eq "mapquest" ) {
+            elsif ( $tilesource eq "osm" ) {
                 $tilesourcename = $tilesource;
-                $baseurl =
-                  "http://otile3.mqcdn.com/tiles/1.0.0/osm/%d/%d/%d.png";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
-                $tilescopyright .= "; tiles courtesy of MapQuest";
+                $baseurl = "https://tile.openstreetmap.org/%d/%d/%d.png";
+                $tilescopyright .= "; tiles courtesy of OpenStreetMap";
+            }
+            elsif ( $tilesource eq "osm-ch" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "https://tile.osm.ch/switzerland/%d/%d/%d.png";
+                $tilescopyright .= "; tiles courtesy of OpenStreetMap";
+            }
+            elsif ( $tilesource eq "osm-bzh" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "https://tile.openstreetmap.bzh/br/%d/%d/%d.png";
+                $tilescopyright .= "; tiles courtesy of OpenStreetMap";
+            }
+            elsif ( $tilesource eq "memomaps" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "https://tileserver.memomaps.de/tilegen/%d/%d/%d.png";
+                $tilescopyright .= "; tiles courtesy of OpenStreetMap";
             }
             elsif ( $tilesource eq "toner" ) {
                 $tilesourcename = $tilesource;
                 $baseurl        = "http://c.tile.stamen.com/toner/%d/%d/%d.png";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "toner-lines" ) {
                 $tilesourcename = $tilesource;
                 $baseurl = "http://c.tile.stamen.com/toner-lines/%d/%d/%d.png";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
+                $tilescopyright .= "; tiles courtesy of Stamen Design";
+            }
+            elsif ( $tilesource eq "toner-background" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "http://c.tile.stamen.com/toner-background/%d/%d/%d.png";
+                $tilescopyright .= "; tiles courtesy of Stamen Design";
+            }
+            elsif ( $tilesource eq "toner-lite" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "http://c.tile.stamen.com/toner-lite/%d/%d/%d.png";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "watercolor" ) {
                 $tilesourcename = $tilesource;
-                $baseurl = "http://c.tile.stamen.com/watercolor/%d/%d/%d.jpg";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
+#                $baseurl = "http://c.tile.stamen.com/watercolor/%d/%d/%d.jpg";
+                $baseurl = "https://tiles.stadiamaps.com/styles/stamen_watercolor/%d/%d/%d.jpg";
+                $tilescopyright .= "; tiles courtesy of Stamen Design";
+            }
+            elsif ( $tilesource eq "terrain" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "https://stamen-tiles.a.ssl.fastly.net/terrain/%d/%d/%d.png";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "hikebike" ) {
                 $tilesourcename = $tilesource;
-                $baseurl = "http://toolserver.org/tiles/hikebike/%d/%d/%d.png";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
+                $baseurl = "https://a.tiles.wmflabs.org/hikebike/%d/%d/%d.png";
                 $tilescopyright .= "; style courtesy of Colin Marquardt";
             }
             elsif ( $tilesource eq "hillshading" ) {
                 $tilesourcename = $tilesource;
-                $baseurl = "http://toolserver.org/~cmarqu/hill/%d/%d/%d.png";
-                $tilescopyright = "Map data © OpenStreetMap contributors, CC BY-SA";
+                $baseurl = "https://a.tiles.wmflabs.org/hillshading/%d/%d/%d.png";
                 $tilescopyright .= "; style courtesy of Colin Marquardt";
             }
             elsif ( $tilesource eq "white" ) {
@@ -373,90 +431,10 @@ sub parseCmdLineParam {
                 $baseurl        = undef;
                 $tilescopyright = undef;
             }
-            elsif ( $tilesource eq "OpenCycleMap" ) {
-                $tilesourcename = "OpenCycleMap";
-                $baseurl = "https://tile.thunderforest.com/cycle/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "Transport" ) {
-                $tilesourcename = "Transport";
-                $baseurl = "https://tile.thunderforest.com/transport/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "Landscape" ) {
-                $tilesourcename = "Landscape";
-                $baseurl = "https://tile.thunderforest.com/landscape/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "Outdoors" ) {
-                $tilesourcename = "Outdoors";
-                $baseurl = "https://tile.thunderforest.com/outdoors/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "TransportDark" ) {
-                $tilesourcename = "TransportDark";
-                $baseurl = "https://tile.thunderforest.com/transport-dark/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "SpinalMap" ) {
-                $tilesourcename = "SpinalMap";
-                $baseurl = "https://tile.thunderforest.com/spinal-map/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "Pioneer" ) {
-                $tilesourcename = "Pioneer";
-                $baseurl = "https://tile.thunderforest.com/pioneer/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MobileAtlas" ) {
-                $tilesourcename = "MobileAtlas";
-                $baseurl = "https://tile.thunderforest.com/mobile-atlas/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "Neighbourhood" ) {
-                $tilesourcename = "Neighbourhood";
-                $baseurl = "https://tile.thunderforest.com/neighbourhood/%d/%d/%d.png?apikey=64e90707f6ec493fb2c04861b5d8b4fc";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerBright" ) {
-                $tilesourcename = "MaptilerBright";
-                $baseurl = "https://maps.tilehosting.com/styles/bright/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerPositron" ) {
-                $tilesourcename = "MaptilerPositron";
-                $baseurl = "https://maps.tilehosting.com/styles/positron/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerBasic" ) {
-                $tilesourcename = "MaptilerBasic";
-                $baseurl = "https://maps.tilehosting.com/styles/basic/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerTopo" ) {
-                $tilesourcename = "MaptilerTopo";
-                $baseurl = "https://maps.tilehosting.com/styles/topo/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerStreets" ) {
-                $tilesourcename = "MaptilerStreets";
-                $baseurl = "https://maps.tilehosting.com/styles/streets/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerSatelliteHybrid" ) {
-                $tilesourcename = "MaptilerSatelliteHybrid";
-                $baseurl = "https://maps.tilehosting.com/styles/hybrid/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerVoyager" ) {
-                $tilesourcename = "MaptilerVoyager";
-                $baseurl = "https://maps.tilehosting.com/styles/voyager/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
-            }
-            elsif ( $tilesource eq "MaptilerDarkMatter" ) {
-                $tilesourcename = "MaptilerDarkMatter";
-                $baseurl = "https://maps.tilehosting.com/styles/darkmatter/%d/%d/%d.png?key=V7IZrA9nBuhpyKhT56Cy";
-                $tilescopyright = undef;
+            elsif ( $tilesource eq "thunderforest" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "http://a.tile.thunderforest.com/landscape/%d/%d/%d.png";
+                $tilescopyright = "Maps © Thunderforest, Data © OpenStreetMap contributors, CC BY-SA 2.0";
             }
 
             if (   ( $tilesource eq "white" )
@@ -478,7 +456,7 @@ sub parseCmdLineParam {
     if ( $quiet == 0 ) {
         print "Sparse mode is " . ( $sparse == 1 ? "ON" : "OFF" ) . "\n";
         print "Using tile images from \"" . $tilesourcename . "\"\n"
-          if ( defined($tilesourcename) );
+            if ( defined($tilesourcename) );
         print "Using white background\n" if ( !defined($tilesourcename) );
         print "Zoom level is " . $zoom;
         if ( $useautozoom > 0 ) {
@@ -487,115 +465,104 @@ sub parseCmdLineParam {
         print "\n";
         print "Pixel size of thumbnail photos is " . $photosize . "\n";
         print "There "
-          . ( $#photolist == 0 ? "is" : "are" ) . " "
-          . ( $#photolist < 0  ? "no" : 1 + $#photolist )
-          . " thumbnail photo"
-          . ( $#photolist == 0 ? "" : "s" )
-          . " given\n";
+            . ( $#photolist == 0 ? "is" : "are" ) . " "
+            . ( $#photolist < 0  ? "no" : 1 + $#photolist )
+            . " thumbnail photo"
+            . ( $#photolist == 0 ? "" : "s" )
+            . " given\n";
+        print "Tiles output directory is " . $outputtilesdirname . "\n";
         print "Output file is " . $outputfilename . "\n";
         print "Using icon \""
-          . $trackiconfilename
-          . "\" to draw track, icon distance is "
-          . $trackicondist
-          . " pixels\n"
-          if ( defined($trackiconfilename) );
+            . $trackiconfilename
+            . "\" to draw track, icon distance is "
+            . $trackicondist
+            . " pixels\n"
+            if ( defined($trackiconfilename) );
     }
 }
 
 sub HELP_MESSAGE {
-    print "\nThis programs converts .gpx files (GPS tracks) into PNG images\n";
-    print "by using images tiles from the OpenStreetMap project\n";
+    print "\n";
+    print "This programs converts .gpx files (GPS eXchange format) into PNG images\n";
+    print "by using images tiles from the OpenStreetMap project (http://osm.org)\n";
     print "and drawing sequences of lines corresponding to GPS points.\n\n";
     print "Copyright 2009-2014 Thomas Fischer <fischer\@unix-ag.uni-kl.de>\n";
-    print
-"This code is released under the GNU Public Licence version 3 or any later version.\n\n";
-    print "This script is called like\n";
-    print "  perl gpx2png.pl [OPTIONS] [GPXFILES]\n\n";
-    print
-"Available options (all optional, default values will be used if not specified)\n";
-    print
-"  -o FILENAME   Output filename of the image. Default: $outputfilename\n";
-    print "  -z N          Zoom level (number or \"auto\"). Default: $zoom\n";
-    print
-"  -a N          Autozoom: Do not use more than N tiles to draw tracks. Default: $maxnumautotiles\n";
-    print
-"  -b N          Additional map image tiles around the map. Default: $additionalborder\n";
-    print
-"  -c N          Cut final map to have N pixels around the drawn tracks. Default: "
-      . ( !defined($cutborder) ? "none" : $cutborder . " pixel" ) . "\n";
-    print
-"  -r N          Radius for waypoint circles. Default: $waypointcircleradius\n";
-    print "  -A            Create animation steps by saving individual images\n"
-      . "                for each drawn track. Default: "
-      . ( defined($doanimate) ? "on" : "off" ) . "\n";
-    print
-"  -t SOURCE     Select the source of image tiles. Possible values for SOURCE:\n";
-    print "                   standard    (default)\n";
-    print "                   cyclemap\n";
-    print "                   transport\n";
-    print "                   opnvkarte\n";
-    print "                   mapquest\n";
-    print "                   toner\n";
-    print "                   toner-lines\n";
-    print "                   watercolor\n";
-    print "                   hikebike\n";
-    print "                   hillshading (transparent!)\n";
-    print "                   white (no tiles, uses grayscale drawing)\n";
-    print "                   transparent (no tiles, uses grayscale drawing)\n";
-    print "                   OpenCycleMap\n";
-    print "                   Transport\n";
-    print "                   Landscape\n";
-    print "                   Outdoors\n";
-    print "                   TransportDark\n";
-    print "                   SpinalMap\n";
-    print "                   Pioneer\n";
-    print "                   MobileAtlas\n";
-    print "                   Neighbourhood\n";
-    print "                Log in to https://manage.thunderforest.com/dashboard first.\n";
-    print "                   MaptilerBright\n";
-    print "                   MaptilerPositron\n";
-    print "                   MaptilerBasic\n";
-    print "                   MaptilerTopo\n";
-    print "                   MaptilerStreets\n";
-    print "                   MaptilerSatelliteHybrid\n";
-    print "                   MaptilerVoyager\n";
-    print "                   MaptilerDarkMatter\n";
-    print "                Log in to https://cloud.maptiler.com/maps/ first.\n";
-    print
-"  --backgroundpostprocess MODE\n";
-    print
-"                Post-process the background (e.g. tiles) by changing\n";
-    print "                saturation and brightness. Possible values for MODE:\n";
-    print "                   normal     (no change)\n";
-    print "                   bright\n";
-    print "                   brightgrey (default)\n";
-    print "                   grey\n";
-    print
-"  -s            Sparse mode: Include only tiles touched by GPS tracks. Default: off\n";
-    print
-      "  -q            Quiet mode: Do not print status output. Default: off\n";
-    print
-"  -j FILENAME   Show thumbnail of JPEG photo at the position as determined\n";
-    print
-"                by GPS coordinates in EXIF tag. Multiple -j options possible\n";
-    print
-"  -W n.n:n.n    Additional invisible point to be included in the map.\n";
-    print
-"                Format: decimal latitude, colon/comma, longitude\n";
-    print
-"  -B n:n:n:n    Enforce a bounding box. Format: decimal min latitude, colon/comma,\n";
-    print
-"                min longitude, colon/comma, max latitude, colon/comma, max longitude\n";
-    print
-"  -J N          Set size of JPEG photo thumbnails. Default: $photosize\n";
-    print "  -i FILENAME   Draw icons along a track like a dotted line\n";
-    print
-"                Icons are rotated towards track's direction, up is forward\n";
-    print
-"  -I N          Distance between the center of two subsequent track icons. Default: "
-      . $trackicondist . "\n";
+    print "Copyright 2020 Grégory David <dev\@groolot.net>\n";
+    print "This code is released under the GNU Public Licence version 3 or any later version.\n";
+    print "\n";
+    print "Usage:\n";
+    print "  $main::NAME.pl [OPTIONS] GPXFILE [GPXFILES]\n";
+    print "\n";
+    print "Options:\n";
+    print "  -T|--tilesdir DIRNAME\n";
+    print "      Output directory for downloaded tiles. Default: $outputtilesdirname\n";
+    print "  -o|--output FILENAME\n";
+    print "      Output filename of the image. Default: $outputfilename\n";
+    print "  -z|--zoom N\n";
+    print "      Zoom level (number or \"auto\"). Default: $zoom\n";
+    print "  -a|--autozoom N\n";
+    print "      Autozoom: Do not use more than N tiles to draw tracks. Default: $maxnumautotiles\n";
+    print "  -b|--bordertiles N\n";
+    print "      Additional map image tiles around the map. Default: $additionalborder\n";
+    print "  -c|--cutborder N\n";
+    print "      Cut final map to have N pixels around the drawn tracks. Default: "
+        . ( !defined($cutborder) ? "none" : $cutborder . " pixel" ) . "\n";
+    print "  -r|--waypointradius N\n";
+    print "      Radius for waypoint circles. Default: $waypointcircleradius\n";
+    print "  -w|--linewidth N\n";
+    print "      Stroke line width. Default: $drawingstylelowerlayer{linewidth}\n";
+    print "  -A|--animate\n";
+    print "      Create animation steps by saving individual images\n"
+        . "                for each drawn track. Default: "
+        . ( defined($doanimate) ? "on" : "off" ) . "\n";
+    print "  -t|--tiles SOURCE\n";
+    print "      Select the source of image tiles. Possible values for SOURCE:\n";
+    print "        standard (default)\n";
+    print "        cyclemap\n";
+    print "        opentopo\n";
+    print "        transport\n";
+    print "        opnvkarte\n";
+    print "        mapquest\n";
+    print "        toner\n";
+    print "        toner-lines\n";
+    print "        watercolor\n";
+    print "        thunderforest\n";
+    print "        hikebike\n";
+    print "        hillshading (transparent!)\n";
+    print "        white (no tiles, uses grayscale drawing)\n";
+    print "        transparent (no tiles, uses grayscale drawing)\n";
+    print "  --backgroundpostprocess MODE\n";
+    print "      Post-process the background (e.g. tiles) by changing\n";
+    print "      saturation and brightness. Possible values for MODE:\n";
+    print "        normal (default)\n";
+    print "        bright\n";
+    print "        brightgrey\n";
+    print "        grey\n";
+    print "  -s|--sparse\n";
+    print "      Sparse mode: Include only tiles touched by GPS tracks. Default: off\n";
+    print "  -q|--quiet\n";
+    print "      Quiet mode: Do not print status output. Default: off\n";
+    print "  -j|--thumbnail FILENAME\n";
+    print "      Show thumbnail of JPEG photo at the position as determined\n";
+    print "      by GPS coordinates in EXIF tag. Multiple -j options possible\n";
+    print "  -N|--nowaypoint\n";
+    print "      No way point mode: Do not print way point(s) on map. Default: off\n";
+    print "  -W|--invisiblewaypoint n.n:n.n\n";
+    print "      Additional invisible point to be included in the map.\n";
+    print "      Format: decimal latitude, colon/comma, longitude\n";
+    print "  -B|--boudingbox n:n:n:n\n";
+    print "      Enforce a bounding box. Format: decimal min latitude, colon/comma,\n";
+    print "      min longitude, colon/comma, max latitude, colon/comma, max longitude\n";
+    print "  -J|--thumbnailsize N\n";
+    print "      Set size of JPEG photo thumbnails. Default: $photosize\n";
+    print "  -i|--trackicon FILENAME\n";
+    print "      Draw icons along a track like a dotted line\n";
+    print "      Icons are rotated towards track's direction, up is forward\n";
+    print "  -I|--trackicondist N\n";
+    print "      Distance between the center of two subsequent track icons. Default: "
+        . $trackicondist . "\n";
     print "\nGPS tracks (format .gpx) are passed as a list of filenames,\n";
-    print "or the .gpx files' content is piped into gpx2png.pl\n";
+    print "or the .gpx files' content is piped into $main::NAME.pl\n";
 }
 
 ## map latitude/longitude and zoom level to tile number (x/y)
@@ -615,9 +582,9 @@ sub Project {
     my $relY1 = $Y * $Unit;
     my $relY2 = $relY1 + $Unit;
 
-# note: $LimitY = ProjectF(degrees(atan(sinh(pi)))) = log(sinh(pi)+cosh(pi)) = pi
-# note: degrees(atan(sinh(pi))) = 85.051128..
-#my $LimitY = ProjectF(85.0511);
+    # note: $LimitY = ProjectF(degrees(atan(sinh(pi)))) = log(sinh(pi)+cosh(pi)) = pi
+    # note: degrees(atan(sinh(pi))) = 85.051128..
+    #my $LimitY = ProjectF(85.0511);
 
     # so stay simple and more accurate
     my $LimitY = pi;
@@ -653,12 +620,9 @@ sub getURL {
 sub getFilename {
     my ( $x, $y, $zoom ) = @_;
     my $suffix = $baseurl =~ /\.jpg$/ ? "jpg" : "png";
-    if (! -d "/tmp/tiles/") {
-    	mkdir "/tmp/tiles/"
-	}
-    return
-      sprintf( "/tmp/tiles/" . $tilesprefix . "-" . $tilesourcename . "-z%03d-x%05d-y%05d.%s",
-        $zoom, $x, $y, $suffix );
+    my $filename = sprintf($tilesprefix . "-z%03d-x%05d-y%05d.%s", $zoom, $x, $y, $suffix );
+    File::Path::make_path(catdir($outputtilesdirname, $tilesourcename));
+    return catfile($outputtilesdirname, $tilesourcename, $filename);
 }
 
 ## download a remote file given an URL and store it in a given local filename
@@ -675,7 +639,7 @@ sub downloadFile {
     my $res = $ua->simple_request( $req );
     if ( $res->code == 200 ) {
         open( FILE, ">$localfilename" )
-          || die "Can't open $localfilename: $!\n";
+            || die "Can't open $localfilename: $!\n";
         binmode FILE;
         print FILE $res->content;
         close FILE;
@@ -695,7 +659,7 @@ sub readGPXfromFile {
     my $relat              = qr/lat=["']($scientific_notation)["']/;
     my $relon              = qr/lon=["']($scientific_notation)["']/;
     my $retrkseg           = qr/\/trkseg/;
-    my $rewpt    = qr/^<wpt lat=["']($scientific_notation)["'] lon=["']($scientific_notation)["']/;
+    my $rewpt    = qr/<wpt lat=["']($scientific_notation)["'] lon=["']($scientific_notation)["']/;
     my $rewpttag = qr/<([^>]+)>(.*?)<\/\1>/;
     my $rewptend = qr/\/wpt/;
 
@@ -710,23 +674,21 @@ sub readGPXfromFile {
             print "Segment with " . @internaltrkseglist . " points\n"
               if ( $quiet == 0 );
             if ( @internaltrkseglist > 1 ) {
-                push @trkseglist, [@internaltrkseglist];
-                @internaltrkseglist = ();
+# removed in order to have only one segment per file
+#                push @trkseglist, [@internaltrkseglist];
+#                @internaltrkseglist = ();
             }
         }
         elsif ( $_ =~ $rewpt ) {
             push @wptlist, [ ( $1, $2 ) ];
-
-     # check if waypoint is geocache by reading the waypoint's name and sym tags
-            my $mapkey     = $1 . "_" . $2;
-            my $isgeocache = 0;
+            # check if waypoint has a name and store it according to its geo position
+            my $lon = $1;
+            my $lat = $2;
+            my $mapkey     = $lon . "_" . $lat;
             my $name       = undef;
             while (<$handle>) {
                 if ( $_ =~ $rewpttag ) {
-                    if ( $1 eq "sym" && $2 eq "Geocache" ) {
-                        $isgeocache = 1;
-                    }
-                    elsif ( $1 eq "name" ) {
+                    if ( $1 eq "name" ) {
                         $name = $2;
                     }
                 }
@@ -734,11 +696,12 @@ sub readGPXfromFile {
                     last;
                 }
             }
-            if ( $isgeocache > 0 && defined($name) ) {
-                $geocaches{$mapkey} = $name;
+            if ( defined($name) ) {
+                $waypoints{$mapkey} = $name;
             }
         }
     }
+    push @trkseglist, [@internaltrkseglist];  # added in order to have only one segment per file
 }
 
 sub determineTiles {
@@ -863,21 +826,21 @@ sub readAllGPX {
 sub downloadTiles {
     if ( !defined($baseurl) || !defined($tilesourcename) ) {
         print "Using white or transparent background instead of tiles\n"
-          if ( $quiet == 0 );
+            if ( $quiet == 0 );
         return;
     }
 
     if ( $sparse == 0 ) {
         print "Using " . ( $numxtiles * $numytiles ) . " tiles\n"
-          if ( $quiet == 0 );
+            if ( $quiet == 0 );
     }
     else {
         print "Using " .
-          keys(%usedtiles)
-          . " tiles (out of "
-          . ( $numxtiles * $numytiles )
-          . " possible)\n"
-          if ( $quiet == 0 );
+            keys(%usedtiles)
+            . " tiles (out of "
+            . ( $numxtiles * $numytiles )
+            . " possible)\n"
+            if ( $quiet == 0 );
     }
 
     for my $y ( $minytile .. $maxytile ) {
@@ -886,7 +849,7 @@ sub downloadTiles {
             my $filename = getFilename( $x, $y, $zoom );
 
             if ( ( $sparse == 0 || defined( $usedtiles{ $x . "|" . $y } ) )
-                && !-e "$filename" )
+                 && !-e "$filename" )
             {
                 printf "Downloading tile (%6d|%6d)", $x, $y if ( $quiet == 0 );
                 downloadFile( $url, $filename );
@@ -930,6 +893,7 @@ sub initializeBackgroundImage {
 
         $w = $image->Modulate(%backgroundpostprocess) if (%backgroundpostprocess);
         die "\n$w" if "$w";
+        $image->AutoLevel();
     }
     elsif ( defined($tilesourcename) && $tilesourcename eq "white" ) {
         $image->Draw(
@@ -983,6 +947,7 @@ sub drawTrekSegment {
     $drawingStyle{points} = $pointseries;
     my $w = $image->Draw(%drawingStyle);
     die "\n$w" if "$w";
+
     print "." if ( $quiet == 0 );
 }
 
@@ -1031,7 +996,7 @@ sub drawTreckSegmentWithArrows {
 
 ## draw given waypoint as a circle with a given drawing style
 sub drawWaypoint {
-    my ( $long, $lat ) = @{ $_[0] };
+    my ( $lon, $lat ) = @{ $_[0] };
     my %drawingStyle = %{ $_[1] };
 
     if ( $waypointcircleradius eq "auto" ) {
@@ -1040,61 +1005,56 @@ sub drawWaypoint {
           if ( $quiet == 0 );
     }
 
-    my ( $x, $y ) = getPixelPosForCoordinates( $lat, $long, $zoom );
+    my ( $x, $y ) = getPixelPosForCoordinates( $lat, $lon, $zoom );
+    my $name = $waypoints{ $lon . "_" . $lat };
+    my $x1 = undef;
+    my $y1 = undef;
+    my $x2 = undef;
+    my $y2 = undef;
+    if (defined($name)){
+        # draw filled rectangle and text with waypoint name
+        my $offset    = $waypointstyle{offset};
+        my %textparam = %waypointstyle;
+        $textparam{x}       = $x;
+        $textparam{y}       = $y;
+        $textparam{align} = "Center";
+        $textparam{stroke} = 'none';
+        $textparam{fill} = $waypointcolor;
+        $textparam{text} = $name;
 
-###    my $geocachename = $geocaches{ $long . "_" . $lat };
-###    if ( defined($geocachename) ) {
-###        unless ( -e $geocacheiconlocal ) {
-###
-###            # download small icon for geocaches
-###            downloadFile( $geocacheiconurl, $geocacheiconlocal );
-###        }
-###
-###        # load and draw small icon for geocaches
-###        my $iconimage = Image::Magick->new;
-###        my $w         = $iconimage->Read($geocacheiconlocal);
-###        die "\n$w" if "$w";
-###        my ( $width, $height ) = $iconimage->Get( 'width', 'height' );
-###        $image->Composite(
-###            image   => $iconimage,
-###            compose => 'Over',
-###            x       => ( $x - $width / 2 ),
-###            y       => ( $y - $height / 2 )
-###        );
-###
-###        # draw filled rectangle and text with geocache name (GC....)
-###        my %textparam = %geocachestyle;
-###        $textparam{x}     = $x;
-###        $textparam{y}     = $y;
-###        $textparam{align} = "Center", $textparam{text} = $geocachename;
-###        $textparam{y} += $height - $textparam{offset};
-###        ( undef, undef, undef, undef, $width, $height ) =
-###          $image->QueryFontMetrics(%textparam);
-###        $image->Draw(
-###            fill      => $textparam{background},
-###            primitive => 'rectangle',
-###            points    => ""
-###              . ( $x - $width / 2 - $textparam{offset} ) . ","
-###              . ( $textparam{y} + $textparam{offset} ) . " "
-###              . ( $x + $width / 2 + $textparam{offset} ) . ","
-###              . ( $textparam{y} - $height )
-###        );
-###        $image->Annotate(%textparam);
-###    }
-###    else {
-
-        # not a geocache, draw plain circle
-        my $x1 = $x - $waypointcircleradius;
-        my $y1 = $y - $waypointcircleradius;
-        my $x2 = $x + $waypointcircleradius;
-        my $y2 = $y + $waypointcircleradius;
+        ( undef, undef, undef, undef, my $width, my $height ) =
+            $image->QueryFontMetrics(%textparam);
+        $x1 = $textparam{x} - $offset*2 - $width / 2;
+        $y1 = $textparam{y} - $offset - $height * 3/4;
+        $x2 = $textparam{x} + $offset*2 + $width / 2;
+        $y2 = $textparam{y} + $offset + $height / 4;
+        $image->Draw(
+            fill      => $waypointstyle{background},
+            primitive => 'rectangle',
+            points    => "$x1,$y1 $x2,$y2"
+            );
+        $image->Annotate(%textparam);
+    }
+    else{
+        # draw plain circle if name not defined
+        $x1 = $x - $waypointcircleradius;
+        $y1 = $y - $waypointcircleradius;
+        $x2 = $x + $waypointcircleradius;
+        $y2 = $y + $waypointcircleradius;
 
         $drawingStyle{points} = "$x1,$y1 $x2,$y2";
+        $drawingStyle{stroke} = $waypointcolor;
+        delete($drawingStyle{background});
+        delete($drawingStyle{encoding});
+        delete($drawingStyle{offset});
 
         my $w = $image->Draw(%drawingStyle);
         die "\n$w" if "$w";
-###    }
-
+        delete($drawingStyle{linewidth});
+        $drawingStyle{stroke} = "#ffffff";
+        $w = $image->Draw(%drawingStyle);
+        die "\n$w" if "$w";
+    }
     print "." if ( $quiet == 0 );
 }
 
@@ -1108,18 +1068,18 @@ sub drawAllTracks {
     my $colorcounter = 0;
     for my $trkseg (@trkseglist) {
         if ( defined($trackiconfilename) ) {
-            drawTreckSegmentWithArrows( \@{$trkseg} );  # 
+            drawTreckSegmentWithArrows( \@{$trkseg} );
         }
         else {
             my %drawingStyle = (%drawingstylelowerlayer);
-            $drawingStyle{primitive} = 'polyline';
+            $drawingStyle{primitive} = 'polyline stroke-linecap=round stroke-linejoin=round';
             $drawingStyle{stroke} =
               $drawingcolors[ ( ++$colorcounter ) % @drawingcolors ];
             drawTrekSegment( \@{$trkseg}, \%drawingStyle );
 
             %drawingStyle = (%drawingstyleupperlayer);
-            $drawingStyle{primitive} = 'polyline';
-            # drawTrekSegment( \@{$trkseg}, \%drawingStyle );
+            $drawingStyle{primitive} = 'polyline stroke-linecap=round stroke-linejoin=round';
+            drawTrekSegment( \@{$trkseg}, \%drawingStyle );
         }
 
         if ( defined($doanimate) ) {
@@ -1133,21 +1093,11 @@ sub drawAllTracks {
 
 ## draw all GPX waypoints first with on a "lower" layer and then on an "upper" layer
 sub drawAllWaypoints {
-    return unless @wptlist > 0;
+    return unless (@wptlist > 0 && $nowaypoint == 0);
 
-    print "Drawing waypoints " if ( $quiet == 0 );
+    print "Drawing waypoints\n" if ( $quiet == 0 );
 
-    my %drawingStyle = (%drawingstylelowerlayer);
-    $drawingStyle{primitive} = 'circle';
-    $drawingStyle{fill}      = 'none';
-    my $colorcounter = 0;
-    for my $wpt (@wptlist) {
-        $drawingStyle{stroke} =
-          $drawingcolors[ ( ++$colorcounter ) % @drawingcolors ];
-        drawWaypoint( \@{$wpt}, \%drawingStyle );
-    }
-
-    %drawingStyle            = (%drawingstyleupperlayer);
+    my %drawingStyle = (%waypointstyle);
     $drawingStyle{primitive} = 'circle';
     $drawingStyle{fill}      = 'none';
     for my $wpt (@wptlist) {
@@ -1242,7 +1192,7 @@ sub addCopyright {
     }
 
     $textparam{text} =
-      "Generated with gpx2png $main::VERSION, © Th. Fischer, GPL 3";
+      "Generated with $main::NAME $main::VERSION, © G. David, Th. Fischer, GPLv3";
     ( undef, undef, undef, undef, $width, $height ) =
       $image->QueryFontMetrics(%textparam);
     $image->Draw(
@@ -1338,7 +1288,7 @@ sub drawPhotos {
     print "Drawing photos " if ( $quiet == 0 );
     my @html = ();
     push( @html, "HTML text starts below\n" );
-    push( @html, "<map name=\"gpx2png\">\n" );
+    push( @html, "<map name=\"$main::NAME\">\n" );
 
     foreach my $jpegfilename (@photolist) {
         my $photo = new Image::Magick || next;
