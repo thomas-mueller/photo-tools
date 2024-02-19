@@ -63,7 +63,10 @@ my @invisiblewptlist = ();
 my $maxnumautotiles = 64;
 
 ## additional border tiles
-my $additionalborder = 0;
+my $additionalborder_l = 0;
+my $additionalborder_r = 0;
+my $additionalborder_t = 0;
+my $additionalborder_b = 0;
 
 ## radius for waypoint circles
 my $waypointcircleradius = "auto";
@@ -265,18 +268,14 @@ sub parseCmdLineParam {
             }
         },
         ## set additional border tiles
-        "bordertiles|b=i" => sub {
+        "bordertiles|b=s" => sub {
             my $param = $_[1];
-            if ( $param =~ /(\d+)/ && $1 >= 0 && $1 <= 32 ) {
-                $additionalborder = $1;
-                print "Additional border tiles set to "
-                  . $additionalborder . "\n"
-                  if ( $quiet == 0 );
-            }
-            else {
-                die
-                    "additional border tiles set but invalid; must be number in 0..32";
-            }
+			if ($param =~ /^(-?\d+)(?:,(-?\d+))?(?:,(-?\d+))?(?:,(-?\d+))?$/) {
+				($additionalborder_l, $additionalborder_r, $additionalborder_t, $additionalborder_b) = ($1, $2 // $1, $3 // $1, $4 // $1);
+			}
+
+			# Now $var1, $var2, $var3, $var4 contain the matched signed integers
+			print "Additional border tiles (left, right, top, bottom) set to: $additionalborder_l, $additionalborder_r, $additionalborder_t, $additionalborder_b\n" if ( $quiet == 0 );
         },
         ## set cut border around drawn tracks
         "cutborder|c=i" => sub {
@@ -380,35 +379,59 @@ sub parseCmdLineParam {
                 $baseurl = "https://tileserver.memomaps.de/tilegen/%d/%d/%d.png";
                 $tilescopyright .= "; tiles courtesy of OpenStreetMap";
             }
+            elsif ( $tilesource eq "alidade-smooth" ) {
+                $tilesourcename = $tilesource;
+                $baseurl        = "https://tiles.stadiamaps.com/tiles/alidade_smooth/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
+                $tilescopyright .= "; tiles courtesy of Stadiamaps";
+            }
+            elsif ( $tilesource eq "alidade-smooth-dark" ) {
+                $tilesourcename = $tilesource;
+                $baseurl        = "https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
+                $tilescopyright .= "; tiles courtesy of Stadiamaps";
+            }
+            elsif ( $tilesource eq "stadia-outdoors" ) {
+                $tilesourcename = $tilesource;
+                $baseurl        = "https://tiles.stadiamaps.com/tiles/outdoors/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
+                $tilescopyright .= "; tiles courtesy of Stadiamaps";
+            }
+            elsif ( $tilesource eq "osm-bright" ) {
+                $tilesourcename = $tilesource;
+                $baseurl        = "https://tiles.stadiamaps.com/tiles/osm_bright/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
+                $tilescopyright .= "; tiles courtesy of Stadiamaps";
+            }
             elsif ( $tilesource eq "toner" ) {
                 $tilesourcename = $tilesource;
-                $baseurl        = "http://c.tile.stamen.com/toner/%d/%d/%d.png";
-                $tilescopyright .= "; tiles courtesy of Stamen Design";
-            }
-            elsif ( $tilesource eq "toner-lines" ) {
-                $tilesourcename = $tilesource;
-                $baseurl = "http://c.tile.stamen.com/toner-lines/%d/%d/%d.png";
+                $baseurl        = "https://tiles.stadiamaps.com/tiles/stamen_toner/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "toner-background" ) {
                 $tilesourcename = $tilesource;
-                $baseurl = "http://c.tile.stamen.com/toner-background/%d/%d/%d.png";
+                $baseurl = "https://tiles.stadiamaps.com/tiles/stamen_toner_background/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
+                $tilescopyright .= "; tiles courtesy of Stamen Design";
+            }
+            elsif ( $tilesource eq "toner-lines" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "https://tiles.stadiamaps.com/tiles/stamen_toner_lines/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
+                $tilescopyright .= "; tiles courtesy of Stamen Design";
+            }
+            elsif ( $tilesource eq "toner-labels" ) {
+                $tilesourcename = $tilesource;
+                $baseurl = "https://tiles.stadiamaps.com/tiles/stamen_toner_labels/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "toner-lite" ) {
                 $tilesourcename = $tilesource;
-                $baseurl = "http://c.tile.stamen.com/toner-lite/%d/%d/%d.png";
+                $baseurl = "https://tiles.stadiamaps.com/tiles/stamen_toner_lite/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "watercolor" ) {
                 $tilesourcename = $tilesource;
-#                $baseurl = "http://c.tile.stamen.com/watercolor/%d/%d/%d.jpg";
-                $baseurl = "https://tiles.stadiamaps.com/styles/stamen_watercolor/%d/%d/%d.jpg";
+                $baseurl = "https://tiles.stadiamaps.com/tiles/stamen_watercolor/%d/%d/%d.jpg?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "terrain" ) {
                 $tilesourcename = $tilesource;
-                $baseurl = "https://stamen-tiles.a.ssl.fastly.net/terrain/%d/%d/%d.png";
+                $baseurl = "https://tiles.stadiamaps.com/tiles/stamen_terrain/%d/%d/%d.png?api_key=8ab5e737-e92f-4618-a486-1863eb5736d0";
                 $tilescopyright .= "; tiles courtesy of Stamen Design";
             }
             elsif ( $tilesource eq "hikebike" ) {
@@ -503,7 +526,7 @@ sub HELP_MESSAGE {
     print "  -a|--autozoom N\n";
     print "      Autozoom: Do not use more than N tiles to draw tracks. Default: $maxnumautotiles\n";
     print "  -b|--bordertiles N\n";
-    print "      Additional map image tiles around the map. Default: $additionalborder\n";
+    print "      Additional map image tiles (left,right,top,bottom) around the map. Default: $additionalborder_l\n";
     print "  -c|--cutborder N\n";
     print "      Cut final map to have N pixels around the drawn tracks. Default: "
         . ( !defined($cutborder) ? "none" : $cutborder . " pixel" ) . "\n";
@@ -750,17 +773,28 @@ sub determineTiles {
 
     # fetch more tiles around the area required to draw the tracks,
     # so that there is enough map space to cut away later
-    my $cutborderadditionaltiles =
-      defined($cutborder) ? int( ( $cutborder + 384 ) / 256 ) : 0;
-    if ( $additionalborder < $cutborderadditionaltiles ) {
-        $additionalborder = $cutborderadditionaltiles;
-    }
+    if (defined($cutborder)) {
+		my $cutborderadditionaltiles = int( ( $cutborder + 384 ) / 256 );
+		# TODO: check the following code
+		if ( $additionalborder_l < $cutborderadditionaltiles ) {
+		    $additionalborder_l = $cutborderadditionaltiles;
+		}
+		if ( $additionalborder_r < $cutborderadditionaltiles ) {
+		    $additionalborder_r = $cutborderadditionaltiles;
+		}
+		if ( $additionalborder_t < $cutborderadditionaltiles ) {
+		    $additionalborder_t = $cutborderadditionaltiles;
+		}
+		if ( $additionalborder_b < $cutborderadditionaltiles ) {
+		    $additionalborder_b = $cutborderadditionaltiles;
+		}
+	}
 
     # consider additional border
-    $maxxtile += $additionalborder;
-    $maxytile += $additionalborder;
-    $minxtile -= $additionalborder;
-    $minytile -= $additionalborder;
+    $maxxtile += $additionalborder_r;
+    $maxytile += $additionalborder_b;
+    $minxtile -= $additionalborder_l;
+    $minytile -= $additionalborder_t;
 
     $numxtiles = $maxxtile - $minxtile + 1;
     $numytiles = $maxytile - $minytile + 1;
@@ -936,19 +970,54 @@ sub drawTrekSegment {
     my %drawingStyle = %{ $_[1] };
 
     my $pointseries = "";
-
+	my $lastx = -1;
+	my $lasty = -1;
+	my $npoints = 0;
     foreach my $trkpt (@trkseg) {
         my ( $long, $lat ) = @{$trkpt};
 
         my ( $x, $y ) = getPixelPosForCoordinates( $lat, $long, $zoom );
-        $pointseries .= " " . $x . "," . $y;
+		if ( $x >= 0 && $x < $pxwidth && $y >= 0 && $y < $pxheight ) {
+			if (((($x - $lastx)*($x - $lastx)) + (($y - $lasty)*($y - $lasty))) > ($drawingstylelowerlayer{linewidth}*$drawingstylelowerlayer{linewidth}/4)) {
+		        $pointseries .= " " . $x . "," . $y;
+				$lastx = $x;
+				$lasty = $y;
+				$npoints += 1;
+		        
+		        if ($npoints == 50) {
+			    	drawSubTrekSegment( $pointseries, \%drawingStyle );
+			        $pointseries = " " . $x . "," . $y;
+			        $npoints = 1;
+		        }
+		    }
+	    }
+	    else {
+			if ($npoints > 1) {
+			   	drawSubTrekSegment( $pointseries, \%drawingStyle );
+			}
+	    	$pointseries = "";
+		    $lastx = -1;
+		    $lasty = -1;
+	    }
     }
 
-    $drawingStyle{points} = $pointseries;
-    my $w = $image->Draw(%drawingStyle);
-    die "\n$w" if "$w";
+	if ($npoints > 1) {
+	   	drawSubTrekSegment( $pointseries, \%drawingStyle );
+	}
 
-    print "." if ( $quiet == 0 );
+	print "." if ( $quiet == 0 );
+}
+
+## draw given sub trek segment as a sequence of lines with a given drawing style
+sub drawSubTrekSegment {
+    my $pointseries = $_[0];
+    my %drawingStyle = %{ $_[1] };
+
+	if (length($pointseries) > 0) {
+		$drawingStyle{points} = $pointseries;
+		my $w = $image->Draw(%drawingStyle);
+		die "\n$w" if "$w";
+	}
 }
 
 ## draw an icon at some x/y coordinates with a given rotation
