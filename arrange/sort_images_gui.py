@@ -65,9 +65,9 @@ class ImageSortGui(ImageViewerBase):
 		self.indexOccurence = len(self.sortedPositions()) - 1
 		self.setLabel()
 	
-	def loadNextSortedInput(self, direction=1):
+	def loadNextSortedInput(self, steps=1):
 		if self.indexLastSorted != None or len(self.sortedFiles) > 0:
-			newSortedIndex = (self.indexLastSorted + (1 if direction > 0 else -1)) if self.indexLastSorted != None else 0
+			newSortedIndex = (self.indexLastSorted + steps) if self.indexLastSorted != None else 0
 			if newSortedIndex < 0: newSortedIndex = 0
 			elif newSortedIndex >= len(self.sortedFiles): newSortedIndex = len(self.sortedFiles) - 1
 			self.loadNextInput(self.inputFiles.index(self.sortedFiles[newSortedIndex]))
@@ -182,6 +182,8 @@ class ImageSortGui(ImageViewerBase):
 		elif event.key() == QtCore.Qt.Key_M: self.toggleMarked()
 		elif event.key() == QtCore.Qt.Key_P: self.loadNextSortedInput(-1)
 		elif event.key() == QtCore.Qt.Key_N: self.loadNextSortedInput(1)
+		elif event.key() == QtCore.Qt.Key_Y: self.loadNextSortedInput(-30)
+		elif event.key() == QtCore.Qt.Key_X: self.loadNextSortedInput(30)
 		elif event.key() == QtCore.Qt.Key_S: self.saveSortResults()
 		elif event.key() == QtCore.Qt.Key_Q: super(ImageSortGui, self).close()
 		elif event.key() == QtCore.Qt.Key_H or event.key() == QtCore.Qt.Key_Question:
