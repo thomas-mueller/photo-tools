@@ -86,7 +86,7 @@
 				searchParams.set("slide", nextSlideIndex+1);
 				const newURL = `${window.location.pathname}?${searchParams.toString()}`;
 				window.history.pushState({path: newURL}, "", newURL);
-				document.title = `Ägypten 2023 (${nextSlideIndex + 1}/${nSlides})`;
+				document.title = `${title} (${nextSlideIndex + 1}/${nSlides})`;
 
 				for (let slideIndex = 0; slideIndex < nSlides; slideIndex++) {
 					slides[slideIndex].style.display = (((slideIndex == currentSlideIndex) || (slideIndex == nextSlideIndex)) ? "block" : "none");
