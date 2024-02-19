@@ -37,8 +37,9 @@ def main():
 	args = parser.parse_args()
 	logger.initLogger(args)
 	
-	if not os.path.exists(args.output):
-		os.makedirs(args.output)
+	output_files_dir = os.path.join(args.output, "files")
+	if not os.path.exists(output_files_dir):
+		os.makedirs(output_files_dir)
 	
 	if args.title is None:
 		args.title = os.path.splitext(os.path.basename(args.input))[0]
@@ -52,9 +53,10 @@ def main():
 	name_format = "image_%0" + str(int(math.floor(math.log10(len(input_files))))+1) + "d%s"
 	
 	images_html = ""
-	template_image_html = string.Template('\t\t\t<div class="slide fade" style="background-image:url($path);"></div>')
+#	template_image_html = string.Template('\t\t\t<div class="slide fade" style="background-image:url(file://${rootDirectory}/files/$path);"></div>')
+	template_image_html = string.Template('\t\t\t<div class="slide fade" style="background-image:url(files/$path);"></div>')
 	for index, input_file in enumerate(tqdm.tqdm(input_files)):  # , description="Copy and resize files")):
-		output_file = os.path.join(args.output, name_format % (index+1, os.path.splitext(input_file)[-1]))
+		output_file = os.path.join(output_files_dir, name_format % (index+1, os.path.splitext(input_file)[-1]))
 		logger.subprocessCall(shlex.split("convert %s -resize %s> %s" % (input_file, args.resolution, output_file)))
 		
 		image_html = template_image_html.safe_substitute(path=os.path.basename(output_file))
