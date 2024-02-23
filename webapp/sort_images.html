@@ -14,8 +14,16 @@
 	<body>
 		<div id="slideshow"></div>
 		<div class="buttons">
-			<div onclick="nextSlide(-1)"></div>
-			<div onclick="nextSlide()"></div>
+			<div onclick="slideShow.nextSlide(-1)"></div>
+			<div onclick="slideShow.nextSlide()"></div>
 		</div>
+		<script>
+			let slideShow;
+			setSlides("/home/tmuller/2023_03_Aegypten_HochzeitNayer/SHOW/Aegypten2023_FHD/files/", "http://127.0.0.1:8000/")
+			.then(() => {
+				slideShow = new SlideShow();
+				slideShow.showSlides();
+			});
+		</script>
 	</body>
 </html>
