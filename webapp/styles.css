@@ -19,6 +19,119 @@ html, body {
 	background-position: center;
 }
 
+.foreground {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.center {
+	flex: 1;
+	display: flex;
+	flex-direction: row;
+}
+
+.center-left-half, .center-right-half {
+	flex: 1;
+}
+
+.horizontal-bar, .vertical-bar {
+	flex: 0 0 auto;
+	text-align: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.horizontal-bar {
+	text-align: center;
+}
+
+.vertical-bar {
+	flex-direction: column;
+}
+
+.horizontal-bar div, .vertical-bar div, .horizontal-bar button, .vertical-bar button {
+	margin: 8px 8px;
+	padding: 8px 8px;
+	background-color: rgba(0, 0, 0, 0.25);
+	color: white;
+	text-shadow: 0px 0px 8px black;
+	border: none;
+	border-radius: 8px;
+	cursor: pointer;
+	font-weight: bold;
+}
+
+.horizontal-bar button, .vertical-bar button {
+	width: 48px;
+	height: 48px;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+
+.button-left1 {
+	background-image: url("icons/left1.svg");
+}
+.button-left2 {
+	background-image: url("icons/left2.svg");
+}
+.button-left3 {
+	background-image: url("icons/left3.svg");
+}
+.button-right1 {
+	background-image: url("icons/right1.svg");
+}
+.button-right2 {
+	background-image: url("icons/right2.svg");
+}
+.button-right3 {
+	background-image: url("icons/right3.svg");
+}
+.button-up1 {
+	background-image: url("icons/up1.svg");
+}
+.button-up2 {
+	background-image: url("icons/up2.svg");
+}
+.button-up3 {
+	background-image: url("icons/up3.svg");
+}
+.button-down1 {
+	background-image: url("icons/down1.svg");
+}
+.button-down2 {
+	background-image: url("icons/down2.svg");
+}
+.button-down3 {
+	background-image: url("icons/down3.svg");
+}
+.button-plus {
+	background-image: url("icons/plus.svg");
+}
+.button-minus {
+	background-image: url("icons/minus.svg");
+}
+.button-select {
+	background-image: url("icons/select.svg");
+}
+.button-unselect {
+	background-image: url("icons/unselect.svg");
+}
+.button-save {
+	background-image: url("icons/save.svg");
+}
+.button-small {
+	background-image: url("icons/small.svg");
+}
+.button-full {
+	background-image: url("icons/full.svg");
+}
+
+
 .buttons {
 	position: absolute;
 	width: 100%;
