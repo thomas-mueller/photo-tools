@@ -23,7 +23,7 @@ def main():
 	                    help="JPG file extensions. [Default: %(default)s]")
 	parser.add_argument("-r", "--raw-dir",
 	                    help="Directory containing RAW photos.")
-	parser.add_argument("--raw-ext", nargs="+", default=["cr2", "dng", "CR2", "DNG"],
+	parser.add_argument("--raw-ext", nargs="+", default=["cr2", "CR2", "arw", "ARW", "dng", "DNG"],
 	                    help="RAW file extensions. [Default: %(default)s]")
 	parser.add_argument("-e", "--exif-date-tag", default="DateTimeOriginal",
 	                    help="Exif tag for date of creation. [Default: %(default)s]")
