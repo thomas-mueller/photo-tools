@@ -19,6 +19,9 @@ class SlideShow {
 			this.nextSlideIndex = slideParameter - 1;
 		}
 		
+		this.imageLabel = document.getElementById("image-label");
+		this.filenameLabel = document.getElementById("filename-label");
+		
 		this.touchStartX;
 		this.setControls();
 	}
@@ -32,6 +35,8 @@ class SlideShow {
 		const newURL = window.location.pathname + "?" + searchParams.toString();
 		window.history.pushState({path: newURL}, "", newURL);
 		document.title = this.title + "(" + (this.nextSlideIndex + 1) + "/" + this.slides.length + ")";
+		this.imageLabel.innerHTML = "Image " + (this.nextSlideIndex + 1) + "/" + this.slides.length;
+		this.filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
 
 		for (let slideIndex = 0; slideIndex < this.slides.length; slideIndex++) {
 			this.slides[slideIndex].style.display = (((slideIndex == this.currentSlideIndex) || (slideIndex == this.nextSlideIndex)) ? "block" : "none");

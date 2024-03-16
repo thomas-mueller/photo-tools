@@ -25,7 +25,7 @@
 				<button class="button-up1"></button>
 				<button class="button-up2"></button>
 				<button class="button-up3"></button>
-				<div>Sorted image: 25/100</div>
+				<div id="sorted-image-label">Sorted image: 25/100</div>
 				<button class="button-right1"></button>
 				<button class="button-right2"></button>
 				<button class="button-right3"></button>
@@ -33,20 +33,20 @@
 			</div>
 			<div class="center">
 				<div class="center-left-half" onclick="slideShow.nextSlide(-1)"></div>
-				<div class="center-right-half" onclick="slideShow.nextSlide()"></div>
+				<div class="center-right-half" onclick="slideShow.nextSlide(1)"></div>
 			</div>
 			<div class="horizontal-bar">
-				<button class="button-left3"></button>
-				<button class="button-left2"></button>
-				<button class="button-left1"></button>
-				<div>Image: 25/100</div>
+				<button class="button-left3" onclick="slideShow.nextSlide(-100)"></button>
+				<button class="button-left2" onclick="slideShow.nextSlide(-10)"></button>
+				<button class="button-left1" onclick="slideShow.nextSlide(-1)"></button>
+				<div id="image-label">Image: 25/100</div>
 				<button class="button-plus"></button>
 				<button class="button-select"></button>
 				<button class="button-unselect"></button>
-				<div>Filename</div>
-				<button class="button-right1"></button>
-				<button class="button-right2"></button>
-				<button class="button-right3"></button>
+				<div id="filename-label">Filename</div>
+				<button class="button-right1" onclick="slideShow.nextSlide(1)"></button>
+				<button class="button-right2" onclick="slideShow.nextSlide(10)"></button>
+				<button class="button-right3" onclick="slideShow.nextSlide(100)"></button>
 				<button class="button-small"></button>
 				<button class="button-full"></button>
 			</div>
