@@ -26,6 +26,30 @@ class SlideShow {
 		this.setControls();
 	}
 	
+	toggleFullScreenMode() {
+		var fullScreenButton = document.getElementById("full-button");
+		if (!document.fullscreenElement) {
+			const element = document.documentElement;
+			if (element.requestFullscreen) {
+				element.requestFullscreen();
+			} else if (element.webkitRequestFullscreen) {
+				element.webkitRequestFullscreen();
+			} else if (element.msRequestFullscreen) {
+				element.msRequestFullscreen();
+			}
+			fullScreenButton.className = "button-small";
+		} else {
+			if (document.exitFullscreen) {
+				document.exitFullscreen();
+			} else if (document.webkitExitFullscreen) {
+				document.webkitExitFullscreen();
+			} else if (document.msExitFullscreen) {
+				document.msExitFullscreen();
+			}
+			fullScreenButton.className = "button-full";
+		}
+	}
+	
 	showSlides() {
 		this.nextSlideIndex = (this.nextSlideIndex + this.slides.length) % this.slides.length;
 		this.slides[this.nextSlideIndex].style.display = "block";
@@ -178,6 +202,8 @@ class ImageSorter extends SlideShow {
 	}
 	
 	toggleSelectCurrentImage() {
+		var selectButton = document.getElementById("select-button");
+		selectButton.className = (selectButton.className == "button-select" ? "button-unselect" : "button-select");
 	}
 	
 	keydownListener(event) {
