@@ -19,9 +19,6 @@ class SlideShow {
 			this.nextSlideIndex = slideParameter - 1;
 		}
 		
-		this.imageLabel = document.getElementById("image-label");
-		this.filenameLabel = document.getElementById("filename-label");
-		
 		this.touchStartX;
 		this.setControls();
 	}
@@ -50,7 +47,7 @@ class SlideShow {
 		}
 	}
 	
-	showSlides() {
+	updateView() {
 		this.nextSlideIndex = (this.nextSlideIndex + this.slides.length) % this.slides.length;
 		this.slides[this.nextSlideIndex].style.display = "block";
 
@@ -59,8 +56,6 @@ class SlideShow {
 		const newURL = window.location.pathname + "?" + searchParams.toString();
 		window.history.pushState({path: newURL}, "", newURL);
 		document.title = this.title + "(" + (this.nextSlideIndex + 1) + "/" + this.slides.length + ")";
-		this.imageLabel.innerHTML = "Image " + (this.nextSlideIndex + 1) + "/" + this.slides.length;
-		this.filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
 
 		for (let slideIndex = 0; slideIndex < this.slides.length; slideIndex++) {
 			this.slides[slideIndex].style.display = (((slideIndex == this.currentSlideIndex) || (slideIndex == this.nextSlideIndex)) ? "block" : "none");
@@ -84,14 +79,18 @@ class SlideShow {
 		}, this.slideTransitionTime);
 	}
 	
-	nextSlide(steps = 1) {
+	nextSlide(steps = 1, newIndex = null) {
 		if (! this.slideTransitionAllowed) {
 			return;
 		}
 
 		this.slideTransitionAllowed = false;
-		this.nextSlideIndex += steps;
-		this.showSlides();
+		if (newIndex === null) {
+			this.nextSlideIndex += steps;
+		} else {
+			this.nextSlideIndex = newIndex;
+		}
+		this.updateView();
 
 		setTimeout(() => {
 			this.slideTransitionAllowed = true;
@@ -174,9 +173,31 @@ class ImageSorter extends SlideShow {
 			return slide.style.backgroundImage.match(/url\("(.+)"\)/)[1];
 		});
 		
-		this.currentSortedImageIndex = 0;
-		this.nextSortedImageIndex = 0;
+		this.currentSortedImageIndex = null;
 		this.sortedImages = [];
+	}
+	
+	updateView() {
+		super.updateView();
+
+		this.imageLabel = document.getElementById("image-label");
+		this.imageLabel.innerHTML = (this.nextSlideIndex + 1) + "/" + this.slides.length;
+		// this.imageLabel.innerHTML = "Image " + (this.nextSlideIndex + 1) + "/" + this.slides.length;
+
+		this.filenameLabel = document.getElementById("filename-label");
+		this.filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
+		
+		this.sortedImageLabel = document.getElementById("sorted-image-label");
+		const sortedIndicesOfCurrentImage = this.sortedImages.reduce(
+			(indices, element, index) => (element === this.images[this.currentSlideIndex]) ? indices.concat(index) : indices, []
+		);
+		if (sortedIndicesOfCurrentImage.length == 0) {
+			this.currentSortedImageIndex = null;
+			this.sortedImageLabel.innerHTML = "-/" + this.sortedImages.length;
+		} else {
+			this.currentSortedImageIndex = sortedIndicesOfCurrentImage[0];
+			this.sortedImageLabel.innerHTML = sortedIndicesOfCurrentImage.map(index => index+1).join(",") + "/" + this.sortedImages.length;
+		}
 	}
 	
 	getConfiguration() {
@@ -186,19 +207,58 @@ class ImageSorter extends SlideShow {
 	setConfiguration(configuration) {
 	}
 	
-	nextSortedImage(steps = 1) {
+	nextSortedImage(steps = 1, newIndex = null) {
+		if (newIndex === null) {
+			if (this.currentSortedImageIndex == null) {
+				this.currentSortedImageIndex = 0;
+				(steps >= 0 ? this.images.slice(this.currentSlideIndex) : this.images.slice(0, this.currentSlideIndex+1).reverse()).forEach(
+					(image) => {
+						const sortedImageIndex = this.sortedImages.indexOf(image);
+						if (sortedImageIndex >= 0) {
+							this.currentSortedImageIndex = sortedImageIndex - 1;
+							return;
+						}
+					}
+				);
+			}
+			this.currentSortedImageIndex += steps;
+		} else {
+			this.currentSortedImageIndex = newIndex;
+		}
+		this.currentSortedImageIndex = (this.currentSortedImageIndex + this.sortedImages.length) % this.sortedImages.length;
+		
+		const nextSlideIndex = this.images.indexOf(this.sortedImages[this.currentSortedImageIndex]);
+		this.nextSlide(null, nextSlideIndex);
 	}
 	
 	addCurrentImage(remove = false) {
 		if (remove) {
-			this.sortedImages.splice(this.currentSortedImageIndex, 1);
+			if (this.sortedImages[this.currentSortedImageIndex] == this.images[this.currentSlideIndex]) {
+				this.sortedImages.splice(this.currentSortedImageIndex, 1);
+			}
 		} else {
-			this.sortedImages.splice(this.currentSortedImageIndex, 0, this.images[this.currentSlideIndex]);
+			// this.sortedImages.splice(this.currentSortedImageIndex+1, 0, this.images[this.currentSlideIndex]);
+			this.sortedImages.push(this.images[this.currentSlideIndex]);
+			this.nextSortedImage(null, this.sortedImages.length - 1);
 		}
-		this.currentSortedImageIndex =+ (remove ? -1 : +1);
+		// this.currentSortedImageIndex += (remove ? -1 : +1);
+		
+		this.updateView();
 	}
 	
-	shiftCurrentSortedImage(steps = 1) {
+	shiftCurrentSortedImage(steps = 1, newIndex = null) {
+		if (this.currentSortedImageIndex !== null) {
+			if (newIndex === null) {
+				newIndex = this.currentSortedImageIndex + steps;
+			}
+			newIndex = Math.max(0, Math.min(newIndex, this.sortedImages.length-1));
+
+			const imageToShift = this.sortedImages.splice(this.currentSortedImageIndex, 1)[0];
+			this.sortedImages.splice(newIndex, 0, imageToShift);
+			this.currentSortedImageIndex = newIndex;
+			
+			this.updateView();
+		}
 	}
 	
 	toggleSelectCurrentImage() {
@@ -210,11 +270,11 @@ class ImageSorter extends SlideShow {
 		if (["n"].includes(event.key)) {
 			this.nextSortedImage();
 		} else if (["p"].includes(event.key)) {
-			this.nextSortedImage(steps=-1);
+			this.nextSortedImage(-1);
 		} else if (["Enter"].includes(event.key)) {
-			this.addCurrentImage();
+			this.addCurrentImage(false);
 		} else if (["Delete"].includes(event.key)) {
-			this.addCurrentImage(remove=true);
+			this.addCurrentImage(true);
 		} else if (["+"].includes(event.key)) {
 			this.shiftCurrentSortedImage();
 		} else if (["-"].includes(event.key)) {
