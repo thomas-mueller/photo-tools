@@ -65,7 +65,7 @@
      inkscape:groupmode="layer"
      id="layer1">
     <path
-       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.05833333;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke"
+       style="fill:#ffffff;fill-rule:evenodd;stroke:#000000;stroke-width:1.05833333;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:markers fill stroke;fill-opacity:1"
        d="M 5.2916548,2.6457991 1.3229045,6.349966 5.2916548,10.054133 V 7.4082994 H 11.377072 V 5.2916326 H 5.2916548 Z"
        id="path1-5"
        sodipodi:nodetypes="cccccccc" />
