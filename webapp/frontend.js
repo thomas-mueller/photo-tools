@@ -24,8 +24,8 @@ class SlideShow {
 	}
 	
 	toggleFullScreenMode() {
-		var fullScreenButton = document.getElementById("full-button");
-		if (!document.fullscreenElement) {
+		var isFullScreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+		if (! isFullScreen) {
 			const element = document.documentElement;
 			if (element.requestFullscreen) {
 				element.requestFullscreen();
@@ -34,7 +34,6 @@ class SlideShow {
 			} else if (element.msRequestFullscreen) {
 				element.msRequestFullscreen();
 			}
-			fullScreenButton.className = "button-small";
 		} else {
 			if (document.exitFullscreen) {
 				document.exitFullscreen();
@@ -43,7 +42,6 @@ class SlideShow {
 			} else if (document.msExitFullscreen) {
 				document.msExitFullscreen();
 			}
-			fullScreenButton.className = "button-full";
 		}
 	}
 	
@@ -107,7 +105,9 @@ class SlideShow {
 	}
 	
 	keydownListener(event) {
-		if (["ArrowRight", "Enter", " "].includes(event.key)) {
+		if (["F11"].includes(event.key)) {
+			this.toggleFullScreenMode();
+		} else if (["ArrowRight", "Enter", " "].includes(event.key)) {
 			this.nextSlide();
 		} else if (["ArrowLeft", "Backspace"].includes(event.key)) {
 			this.nextSlide(-1);
@@ -175,6 +175,21 @@ class ImageSorter extends SlideShow {
 		
 		this.currentSortedImageIndex = null;
 		this.sortedImages = [];
+
+		document.addEventListener("fullscreenchange", this.handleFullScreenChange);
+		document.addEventListener("webkitfullscreenchange", this.handleFullScreenChange);
+		document.addEventListener("mozfullscreenchange", this.handleFullScreenChange);
+		document.addEventListener("msfullscreenchange", this.handleFullScreenChange);
+	}
+
+	handleFullScreenChange() {
+		var fullScreenButton = document.getElementById("full-button");
+		var isFullScreen = !!(document.fullscreenElement || document.webkitFullscreenElement || document.msFullscreenElement);
+		if (isFullScreen) {
+			fullScreenButton.className = "button-small";
+		} else {
+			fullScreenButton.className = "button-full";
+		}
 	}
 	
 	updateView() {
