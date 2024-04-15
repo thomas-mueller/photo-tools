@@ -15,38 +15,50 @@
 		<div id="slideshow"></div>
 		<div class="foreground">
 			<div class="horizontal-bar">
-				<button class="button-left3" onclick="slideShow.nextSortedImage(null, 0)"></button>
-				<button class="button-left2" onclick="slideShow.nextSortedImage(-10)"></button>
-				<button class="button-left1" onclick="slideShow.nextSortedImage(-1)"></button>
-				<button class="button-minus" onclick="slideShow.addCurrentImage(true)"></button>
-				<button class="button-down3" onclick="slideShow.shiftCurrentSortedImage(null, 0)"></button>
-				<button class="button-down2" onclick="slideShow.shiftCurrentSortedImage(-10)"></button>
-				<button class="button-down1" onclick="slideShow.shiftCurrentSortedImage(-1)"></button>
-				<button class="button-up1" onclick="slideShow.shiftCurrentSortedImage(1)"></button>
-				<button class="button-up2" onclick="slideShow.shiftCurrentSortedImage(10)"></button>
-				<button class="button-up3" onclick="slideShow.shiftCurrentSortedImage(null, Number.MAX_SAFE_INTEGER)"></button>
-				<div id="sorted-image-label">Sorted image: 25/100</div>
-				<button class="button-right1" onclick="slideShow.nextSortedImage(1)"></button>
-				<button class="button-right2" onclick="slideShow.nextSortedImage(10)"></button>
-				<button class="button-right3" onclick="slideShow.nextSortedImage(null, -1)"></button>
-				<button class="button-save" onclick="slideShow.getConfiguration()"></button>
+				<div class="horizontal-bar-left">
+					<button class="button-save" onclick="slideShow.getConfiguration()"></button>
+				</div>
+				<div class="horizontal-bar-center">
+					<button class="button-left3" onclick="slideShow.nextSortedImage(null, 0)"></button>
+					<button class="button-left2" onclick="slideShow.nextSortedImage(-10)"></button>
+					<button class="button-left1" onclick="slideShow.nextSortedImage(-1)"></button>
+					<div id="sorted-image-label">Sorted image: 25/100</div>
+					<button class="button-right1" onclick="slideShow.nextSortedImage(1)"></button>
+					<button class="button-right2" onclick="slideShow.nextSortedImage(10)"></button>
+					<button class="button-right3" onclick="slideShow.nextSortedImage(null, -1)"></button>
+				</div>
+				<div class="horizontal-bar-right">
+					<button class="button-down3" onclick="slideShow.shiftCurrentSortedImage(null, 0)"></button>
+					<button class="button-down2" onclick="slideShow.shiftCurrentSortedImage(-10)"></button>
+					<button class="button-down1" onclick="slideShow.shiftCurrentSortedImage(-1)"></button>
+					<button class="button-up1" onclick="slideShow.shiftCurrentSortedImage(1)"></button>
+					<button class="button-up2" onclick="slideShow.shiftCurrentSortedImage(10)"></button>
+					<button class="button-up3" onclick="slideShow.shiftCurrentSortedImage(null, Number.MAX_SAFE_INTEGER)"></button>
+					<button class="button-minus" onclick="slideShow.addCurrentImage(true)"></button>
+				</div>
 			</div>
 			<div class="center">
-				<div class="center-left-half" onclick="slideShow.nextSlide(-1)"></div>
-				<div class="center-right-half" onclick="slideShow.nextSlide(1)"></div>
+<!--				<div class="center-left-half" onclick="slideShow.nextSlide(-1)"></div>-->
+<!--				<div class="center-right-half" onclick="slideShow.nextSlide(1)"></div>-->
 			</div>
 			<div class="horizontal-bar">
-				<button class="button-left3" onclick="slideShow.nextSlide(null, 0)"></button>
-				<button class="button-left2" onclick="slideShow.nextSlide(-100)"></button>
-				<button class="button-left1" onclick="slideShow.nextSlide(-1)"></button>
-				<div id="image-label">Image: 25/100</div>
-				<button class="button-plus" onclick="slideShow.addCurrentImage(false)"></button>
-				<button class="button-select" id="select-button" onclick="slideShow.toggleSelectCurrentImage()"></button>
-				<div id="filename-label">Filename</div>
-				<button class="button-right1" onclick="slideShow.nextSlide(1)"></button>
-				<button class="button-right2" onclick="slideShow.nextSlide(100)"></button>
-				<button class="button-right3" onclick="slideShow.nextSlide(null, -1)"></button>
-				<button class="button-full" id="full-button" onclick="slideShow.toggleFullScreenMode()"></button>
+				<div class="horizontal-bar-left">
+					<button class="button-full" id="full-button" onclick="slideShow.toggleFullScreenMode()"></button>
+				</div>
+				<div class="horizontal-bar-center">
+					<button class="button-left3" onclick="slideShow.nextSlide(null, 0)"></button>
+					<button class="button-left2" onclick="slideShow.nextSlide(-100)"></button>
+					<button class="button-left1" onclick="slideShow.nextSlide(-1)"></button>
+					<div id="image-label">Image: 25/100</div>
+<!--					<button class="button-select" id="select-button" onclick="slideShow.toggleSelectCurrentImage()"></button>-->
+					<button class="button-right1" onclick="slideShow.nextSlide(1)"></button>
+					<button class="button-right2" onclick="slideShow.nextSlide(100)"></button>
+					<button class="button-right3" onclick="slideShow.nextSlide(null, -1)"></button>
+				</div>
+				<div class="horizontal-bar-right">
+					<div id="filename-label">Filename</div>
+					<button class="button-plus" onclick="slideShow.addCurrentImage(false)"></button>
+				</div>
 			</div>
 		</div>
 		<script>

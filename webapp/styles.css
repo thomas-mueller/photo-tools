@@ -39,25 +39,54 @@ html, body {
 	flex: 1;
 }
 
-.horizontal-bar, .vertical-bar {
-	flex: 0 0 auto;
-	text-align: center;
+.horizontal-bar {
+	position: relative;
 	display: flex;
 	justify-content: center;
 	align-items: center;
 }
 
-.horizontal-bar {
-	text-align: center;
+.horizontal-bar-left,
+.horizontal-bar-right {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
 }
 
+.horizontal-bar-left {
+	left: 0;
+}
+
+.horizontal-bar-right {
+	right: 0;
+}
+
+.horizontal-bar-center,
 .vertical-bar {
-	flex-direction: column;
+	flex: 0 0 auto;
+	text-align: center;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	text-align: center;
+	max-width: 100%;
+	overflow: hidden;
 }
 
-.horizontal-bar div, .vertical-bar div, .horizontal-bar button, .vertical-bar button {
-	margin: 8px 8px;
-	padding: 8px 8px;
+.horizontal-bar-left div,
+.horizontal-bar-center div,
+.horizontal-bar-right div,
+.horizontal-bar-left button,
+.horizontal-bar-center button,
+.horizontal-bar-right button {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	height: 32px;
+	margin: 8px;
+	padding: 8px;
 	background-color: rgba(0, 0, 0, 0.25);
 	color: white;
 	text-shadow: 0px 0px 8px black;
@@ -68,7 +97,7 @@ html, body {
 }
 
 .horizontal-bar button:active, .vertical-bar button:active {
-    background-color: rgba(0, 0, 0, 0.75);
+	background-color: rgba(0, 0, 0, 0.75);
 }
 
 .horizontal-bar button, .vertical-bar button {
