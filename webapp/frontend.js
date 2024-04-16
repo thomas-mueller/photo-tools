@@ -195,23 +195,33 @@ class ImageSorter extends SlideShow {
 	updateView() {
 		super.updateView();
 
-		this.imageLabel = document.getElementById("image-label");
-		this.imageLabel.innerHTML = (this.nextSlideIndex + 1) + "/" + this.slides.length;
-		// this.imageLabel.innerHTML = "Image " + (this.nextSlideIndex + 1) + "/" + this.slides.length;
+		var imageLabel = document.getElementById("image-label");
+		imageLabel.innerHTML = (this.nextSlideIndex + 1) + "/" + this.slides.length;
 
-		this.filenameLabel = document.getElementById("filename-label");
-		this.filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
+		var filenameLabel = document.getElementById("filename-label");
+		filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
 		
-		this.sortedImageLabel = document.getElementById("sorted-image-label");
+		var sortedImageLabel = document.getElementById("sorted-image-label");
+		const modifySortedImageClassNames = ["button-down3", "button-down2", "button-down1", "button-up1", "button-up2", "button-up3", "button-minus"];
+		let modifySortedImageButtons = [];
+		modifySortedImageClassNames.forEach(className => {
+			modifySortedImageButtons.push(...document.getElementsByClassName(className));
+		});
 		const sortedIndicesOfCurrentImage = this.sortedImages.reduce(
 			(indices, element, index) => (element === this.images[this.currentSlideIndex]) ? indices.concat(index) : indices, []
 		);
 		if (sortedIndicesOfCurrentImage.length == 0) {
 			this.currentSortedImageIndex = null;
-			this.sortedImageLabel.innerHTML = "-/" + this.sortedImages.length;
+			sortedImageLabel.innerHTML = "-/" + this.sortedImages.length;
+			modifySortedImageButtons.forEach(button => {
+				button.style.display = "none";
+			});
 		} else {
 			this.currentSortedImageIndex = sortedIndicesOfCurrentImage[0];
-			this.sortedImageLabel.innerHTML = sortedIndicesOfCurrentImage.map(index => index+1).join(",") + "/" + this.sortedImages.length;
+			sortedImageLabel.innerHTML = sortedIndicesOfCurrentImage.map(index => index+1).join(",") + "/" + this.sortedImages.length;
+			modifySortedImageButtons.forEach(button => {
+				button.style.display = "block";
+			});
 		}
 	}
 	
@@ -252,11 +262,9 @@ class ImageSorter extends SlideShow {
 				this.sortedImages.splice(this.currentSortedImageIndex, 1);
 			}
 		} else {
-			// this.sortedImages.splice(this.currentSortedImageIndex+1, 0, this.images[this.currentSlideIndex]);
 			this.sortedImages.push(this.images[this.currentSlideIndex]);
 			this.nextSortedImage(null, this.sortedImages.length - 1);
 		}
-		// this.currentSortedImageIndex += (remove ? -1 : +1);
 		
 		this.updateView();
 	}
