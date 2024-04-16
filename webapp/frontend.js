@@ -174,6 +174,7 @@ class ImageSorter extends SlideShow {
 		});
 		
 		this.currentSortedImageIndex = null;
+		this.sortedIndicesOfCurrentImage = [];
 		this.sortedImages = [];
 
 		document.addEventListener("fullscreenchange", this.handleFullScreenChange);
@@ -207,21 +208,21 @@ class ImageSorter extends SlideShow {
 		modifySortedImageClassNames.forEach(className => {
 			modifySortedImageButtons.push(...document.getElementsByClassName(className));
 		});
-		const sortedIndicesOfCurrentImage = this.sortedImages.reduce(
+		this.sortedIndicesOfCurrentImage = this.sortedImages.reduce(
 			(indices, element, index) => (element === this.images[this.currentSlideIndex]) ? indices.concat(index) : indices, []
 		);
-		if (sortedIndicesOfCurrentImage.length == 0) {
+		if (this.sortedIndicesOfCurrentImage.length == 0) {
 			this.currentSortedImageIndex = null;
 			sortedImageLabel.innerHTML = "-/" + this.sortedImages.length;
 			modifySortedImageButtons.forEach(button => {
 				button.style.display = "none";
 			});
 		} else {
-			if ((this.currentSortedImageIndex == null) || (! sortedIndicesOfCurrentImage.includes(this.currentSortedImageIndex))) {
-				this.currentSortedImageIndex = sortedIndicesOfCurrentImage[0];
+			if ((this.currentSortedImageIndex == null) || (! this.sortedIndicesOfCurrentImage.includes(this.currentSortedImageIndex))) {
+				this.currentSortedImageIndex = this.sortedIndicesOfCurrentImage[0];
 			}
-			sortedImageLabel.innerHTML = sortedIndicesOfCurrentImage.map(index => {
-				return ((sortedIndicesOfCurrentImage.length == 1) || (index != this.currentSortedImageIndex)) ? index+1 : "<u>"+String(index+1)+"</u>"
+			sortedImageLabel.innerHTML = this.sortedIndicesOfCurrentImage.map(index => {
+				return ((this.sortedIndicesOfCurrentImage.length == 1) || (index != this.currentSortedImageIndex)) ? index+1 : "<u>"+String(index+1)+"</u>"
 			}).join(",") + "/" + this.sortedImages.length;
 			modifySortedImageButtons.forEach(button => {
 				button.style.display = "block";
@@ -291,6 +292,15 @@ class ImageSorter extends SlideShow {
 	toggleSelectCurrentImage() {
 		var selectButton = document.getElementById("select-button");
 		selectButton.className = (selectButton.className == "button-select" ? "button-unselect" : "button-select");
+	}
+	
+	toggleCurrentSortedImageIndex() {
+		if ((this.currentSortedImageIndex != null) && (this.sortedIndicesOfCurrentImage.length > 0)) {
+			var currentIndex = this.sortedIndicesOfCurrentImage.indexOf(this.currentSortedImageIndex);
+			var nextIndex = (currentIndex + 1) % this.sortedIndicesOfCurrentImage.length;
+			this.currentSortedImageIndex = this.sortedIndicesOfCurrentImage[nextIndex];
+			this.updateView();
+		}
 	}
 	
 	keydownListener(event) {
