@@ -217,8 +217,12 @@ class ImageSorter extends SlideShow {
 				button.style.display = "none";
 			});
 		} else {
-			this.currentSortedImageIndex = sortedIndicesOfCurrentImage[0];
-			sortedImageLabel.innerHTML = sortedIndicesOfCurrentImage.map(index => index+1).join(",") + "/" + this.sortedImages.length;
+			if ((this.currentSortedImageIndex == null) || (! sortedIndicesOfCurrentImage.includes(this.currentSortedImageIndex))) {
+				this.currentSortedImageIndex = sortedIndicesOfCurrentImage[0];
+			}
+			sortedImageLabel.innerHTML = sortedIndicesOfCurrentImage.map(index => {
+				return ((sortedIndicesOfCurrentImage.length == 1) || (index != this.currentSortedImageIndex)) ? index+1 : "<u>"+String(index+1)+"</u>"
+			}).join(",") + "/" + this.sortedImages.length;
 			modifySortedImageButtons.forEach(button => {
 				button.style.display = "block";
 			});
