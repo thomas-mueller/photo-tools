@@ -24,7 +24,7 @@
 					<button class="button-left3" onclick="slideShow.nextSortedImage(null, 0)"></button>
 					<button class="button-left2" onclick="slideShow.nextSortedImage(-10)"></button>
 					<button class="button-left1" onclick="slideShow.nextSortedImage(-1)"></button>
-					<div id="sorted-image-label" onclick="slideShow.toggleCurrentSortedImageIndex()"></div>
+					<div id="sorted-image-label" onclick="slideShow.toggleCurrentSortedImageIndex()">-/-</div>
 					<button class="button-right1" onclick="slideShow.nextSortedImage(1)"></button>
 					<button class="button-right2" onclick="slideShow.nextSortedImage(10)"></button>
 					<button class="button-right3" onclick="slideShow.nextSortedImage(null, -1)"></button>
@@ -51,14 +51,14 @@
 					<button class="button-left3" onclick="slideShow.nextSlide(null, 0)"></button>
 					<button class="button-left2" onclick="slideShow.nextSlide(-100)"></button>
 					<button class="button-left1" onclick="slideShow.nextSlide(-1)"></button>
-					<div id="image-label"></div>
+					<div id="image-label">-/-</div>
 <!--					<button class="button-select" id="select-button" onclick="slideShow.toggleSelectCurrentImage()"></button>-->
 					<button class="button-right1" onclick="slideShow.nextSlide(1)"></button>
 					<button class="button-right2" onclick="slideShow.nextSlide(100)"></button>
 					<button class="button-right3" onclick="slideShow.nextSlide(null, -1)"></button>
 				</div>
 				<div class="horizontal-bar-right">
-					<div id="filename-label">Filename</div>
+					<div id="filename-label"></div>
 					<button class="button-plus" onclick="slideShow.addCurrentImage(false)"></button>
 				</div>
 			</div>
