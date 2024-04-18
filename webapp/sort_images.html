@@ -16,7 +16,9 @@
 		<div class="foreground">
 			<div class="horizontal-bar">
 				<div class="horizontal-bar-left">
-					<button class="button-save" onclick="slideShow.getConfiguration()"></button>
+					<button class="button-new" onclick="slideShow.newConfiguration()"></button>
+					<button class="button-open" onclick="slideShow.openConfiguration(1)"></button>
+					<button class="button-save" onclick="slideShow.saveConfiguration()"></button>
 				</div>
 				<div class="horizontal-bar-center">
 					<button class="button-left3" onclick="slideShow.nextSortedImage(null, 0)"></button>
@@ -62,12 +64,12 @@
 			</div>
 		</div>
 		<script>
-			let slideShow;
-			setSlides("/home/tmuller/2023_03_Aegypten_HochzeitNayer/SHOW/Aegypten2023_FHD/files/", "http://127.0.0.1:8000/")
-			.then(() => {
-				slideShow = new ImageSorter();
-				slideShow.updateView();
-			});
+			let slideShow = new ImageSorter();
+<!--			setSlides("/home/tmuller/2023_03_Aegypten_HochzeitNayer/SHOW/Aegypten2023_FHD/files/", "http://localhost:8000/")-->
+<!--			.then(() => {-->
+<!--				slideShow = new ImageSorter();-->
+<!--				slideShow.updateView();-->
+<!--			});-->
 		</script>
 	</body>
 </html>

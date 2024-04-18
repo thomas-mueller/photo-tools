@@ -160,6 +160,12 @@ html, body {
 .button-unselect {
 	background-image: url("icons/unselect.svg");
 }
+.button-new {
+	background-image: url("icons/new.svg");
+}
+.button-open {
+	background-image: url("icons/open.svg");
+}
 .button-save {
 	background-image: url("icons/save.svg");
 }

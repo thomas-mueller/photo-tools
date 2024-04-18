@@ -230,11 +230,23 @@ class ImageSorter extends SlideShow {
 		}
 	}
 	
-	getConfiguration() {
-		console.log(this.sortedImages);
+	newConfiguration() {
 	}
 	
-	setConfiguration(configuration) {
+	openConfiguration(configuration) {
+		const userInput = window.prompt("Please enter your name:", "John Doe");
+		if (userInput !== null) {
+			// User provided input and clicked OK
+			console.log("Hello, " + userInput);
+		} else {
+			// User clicked Cancel
+			console.log("User cancelled the prompt.");
+		}
+
+	}
+	
+	saveConfiguration() {
+		console.log(this.sortedImages);
 	}
 	
 	nextSortedImage(steps = 1, newIndex = null) {
@@ -319,7 +331,7 @@ class ImageSorter extends SlideShow {
 		} else if (["m"].includes(event.key)) {
 			this.toggleSelectCurrentImage();
 		} else if (["s"].includes(event.key)) {
-			this.getConfiguration();
+			this.saveConfiguration();
 		} else {
 			super.keydownListener(event);
 		}
