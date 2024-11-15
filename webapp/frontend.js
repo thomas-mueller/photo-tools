@@ -1,3 +1,5 @@
+const serverURL = "http://localhost:8000/";
+
 class SlideShow {
 	constructor(slideTransitionTime = 500, minTimeBetweenSlides = 0) {
 		this.slideTransitionTime = slideTransitionTime;
@@ -44,12 +46,12 @@ class SlideShow {
 			}
 		}
 	}
-	
+
 	updateView() {
 		this.nextSlideIndex = (this.nextSlideIndex + this.slides.length) % this.slides.length;
 		this.slides[this.nextSlideIndex].style.display = "block";
 
-		const searchParams = new URLSearchParams();
+		const searchParams = new URLSearchParams(window.location.search);
 		searchParams.set("slide", this.nextSlideIndex+1);
 		const newURL = window.location.pathname + "?" + searchParams.toString();
 		window.history.pushState({path: newURL}, "", newURL);
@@ -169,9 +171,10 @@ class ImageSorter extends SlideShow {
 	constructor(slideTransitionTime = 0, minTimeBetweenSlides = 0) {
 		super(slideTransitionTime=slideTransitionTime, minTimeBetweenSlides=minTimeBetweenSlides);
 		
-		this.images = Array.from(this.slides).map(slide => {
-			return slide.style.backgroundImage.match(/url\("(.+)"\)/)[1];
-		});
+		const urlParams = new URLSearchParams(window.location.search);
+		this.imagesDirectoryParameter = urlParams.get("images_directory");
+		this.nameParameter = urlParams.get("name");
+		this.setSlides(this.imagesDirectoryParameter);
 		
 		this.currentSortedImageIndex = null;
 		this.sortedIndicesOfCurrentImage = [];
@@ -192,6 +195,38 @@ class ImageSorter extends SlideShow {
 			fullScreenButton.className = "button-full";
 		}
 	}
+
+    listImages(directory) {
+	    return fetch(serverURL + "list_images/?" + new URLSearchParams({directory: directory}), {method: "GET", mode: "cors"})
+		    .then(response => response.json())
+		    .then(data => {
+			    return data.images;
+		    })
+		    .catch(error => {
+			    throw error;
+		    });
+    }
+
+    async setSlides(directory) {
+	    var slideShow = document.getElementById("slideshow");
+
+	    const images = await this.listImages(directory)
+	    images.forEach(image => {
+		    var slide = document.createElement("div");
+		    slide.setAttribute("class", "slide fade");
+		    slide.style.backgroundImage = "url(" + image + ")";
+		    slideShow.appendChild(slide);
+	    });
+
+		this.slides = document.getElementsByClassName("slide");
+		for (let slideIndex = 0; slideIndex < this.slides.length; slideIndex++) {
+			this.slides[slideIndex].style.transition = "opacity " + this.slideTransitionTime + "ms ease-in-out";
+		}
+		this.images = Array.from(this.slides).map(slide => {
+			return slide.style.backgroundImage.match(/url\("(.+)"\)/)[1];
+		});
+		this.updateView();
+    }
 	
 	updateView() {
 		super.updateView();
@@ -336,32 +371,4 @@ class ImageSorter extends SlideShow {
 			super.keydownListener(event);
 		}
 	}
-}
-
-function listImages(directory, serverURL) {
-	return fetch(serverURL + "list_images/?" + new URLSearchParams({directory: directory}), {method: "GET", mode: "cors"})
-		.then(response => response.json())
-		.then(data => {
-			return data.images;
-		})
-		.catch(error => {
-			throw error;
-		});
-}
-
-function setSlides(directory, serverURL) {
-	var slideShow = document.getElementById("slideshow");
-
-	return listImages(directory, serverURL)
-		.then(images => {
-			return images.forEach(image => {
-				var slide = document.createElement("div");
-				slide.setAttribute("class", "slide fade");
-				slide.style.backgroundImage = "url(" + image + ")";
-				slideShow.appendChild(slide);
-			});
-		})
-		.catch(error => {
-			throw error;
-		});
 }
