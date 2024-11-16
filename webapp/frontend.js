@@ -175,21 +175,18 @@ class SlideShow {
 class ImageSorter extends SlideShow {
 	constructor(slideTransitionTime = 0, minTimeBetweenSlides = 0) {
 		super(slideTransitionTime=slideTransitionTime, minTimeBetweenSlides=minTimeBetweenSlides);
-		
-		const urlParams = new URLSearchParams(window.location.search);
-		const imagesDirectoryParameter = urlParams.get("images_directory");
-		const nameParameter = urlParams.get("name") ?? defaultNameParameter;
-		this.setSlides();
-		this.openConfiguration();
-		
-		this.currentSortedImageIndex = null;
-		this.sortedIndicesOfCurrentImage = [];
-		this.sortedImages = [];
 
 		document.addEventListener("fullscreenchange", this.handleFullScreenChange);
 		document.addEventListener("webkitfullscreenchange", this.handleFullScreenChange);
 		document.addEventListener("mozfullscreenchange", this.handleFullScreenChange);
 		document.addEventListener("msfullscreenchange", this.handleFullScreenChange);
+
+		this.currentSortedImageIndex = null;
+		this.sortedIndicesOfCurrentImage = [];
+		this.sortedImages = [];
+
+		this.setSlides();
+		this.openConfiguration();
 	}
 
 	handleFullScreenChange() {
@@ -242,6 +239,9 @@ class ImageSorter extends SlideShow {
 	
 	updateView() {
 		super.updateView();
+		
+		const urlParams = new URLSearchParams(window.location.search);
+		this.title = (urlParams.get("name") ?? defaultNameParameter) + " "
 
 		var imageLabel = document.getElementById("image-label");
 		imageLabel.innerHTML = (this.nextSlideIndex + 1) + "/" + this.slides.length;
