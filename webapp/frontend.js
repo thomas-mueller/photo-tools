@@ -1,4 +1,9 @@
 const serverURL = "http://localhost:8000/";
+const defaultHeaders = {
+    "content-type": "application/json",
+    "Accept": "application/json",
+}
+const defaultNameParameter = "sorted_images";
 
 class SlideShow {
 	constructor(slideTransitionTime = 500, minTimeBetweenSlides = 0) {
@@ -51,9 +56,9 @@ class SlideShow {
 		this.nextSlideIndex = (this.nextSlideIndex + this.slides.length) % this.slides.length;
 		this.slides[this.nextSlideIndex].style.display = "block";
 
-		const searchParams = new URLSearchParams(window.location.search);
-		searchParams.set("slide", this.nextSlideIndex+1);
-		const newURL = window.location.pathname + "?" + searchParams.toString();
+		const urlParams = new URLSearchParams(window.location.search);
+		urlParams.set("slide", this.nextSlideIndex+1);
+		const newURL = window.location.pathname + "?" + urlParams;
 		window.history.pushState({path: newURL}, "", newURL);
 		document.title = this.title + "(" + (this.nextSlideIndex + 1) + "/" + this.slides.length + ")";
 
@@ -172,9 +177,10 @@ class ImageSorter extends SlideShow {
 		super(slideTransitionTime=slideTransitionTime, minTimeBetweenSlides=minTimeBetweenSlides);
 		
 		const urlParams = new URLSearchParams(window.location.search);
-		this.imagesDirectoryParameter = urlParams.get("images_directory");
-		this.nameParameter = urlParams.get("name");
-		this.setSlides(this.imagesDirectoryParameter);
+		const imagesDirectoryParameter = urlParams.get("images_directory");
+		const nameParameter = urlParams.get("name") ?? defaultNameParameter;
+		this.setSlides();
+		this.openConfiguration();
 		
 		this.currentSortedImageIndex = null;
 		this.sortedIndicesOfCurrentImage = [];
@@ -196,21 +202,26 @@ class ImageSorter extends SlideShow {
 		}
 	}
 
-    listImages(directory) {
-	    return fetch(serverURL + "list_images/?" + new URLSearchParams({directory: directory}), {method: "GET", mode: "cors"})
-		    .then(response => response.json())
-		    .then(data => {
-			    return data.images;
-		    })
-		    .catch(error => {
-			    throw error;
-		    });
-    }
-
     async setSlides(directory) {
-	    var slideShow = document.getElementById("slideshow");
+		const urlParams = new URLSearchParams(window.location.search);
+	    const images = await fetch(
+	        serverURL + "list_images/?" + new URLSearchParams({
+	            directory: urlParams.get("images_directory")
+	        }),
+	        {
+	            method: "GET",
+                headers: defaultHeaders,
+	        }
+	    )
+	    .then(response => response.json())
+	    .then(data => {
+		    return data.images;
+	    })
+	    .catch(error => {
+		    throw error;
+	    });
 
-	    const images = await this.listImages(directory)
+	    var slideShow = document.getElementById("slideshow");
 	    images.forEach(image => {
 		    var slide = document.createElement("div");
 		    slide.setAttribute("class", "slide fade");
@@ -225,6 +236,7 @@ class ImageSorter extends SlideShow {
 		this.images = Array.from(this.slides).map(slide => {
 			return slide.style.backgroundImage.match(/url\("(.+)"\)/)[1];
 		});
+
 		this.updateView();
     }
 	
@@ -266,9 +278,6 @@ class ImageSorter extends SlideShow {
 	}
 	
 	newConfiguration() {
-	}
-	
-	openConfiguration(configuration) {
 		const userInput = window.prompt("Please enter your name:", "John Doe");
 		if (userInput !== null) {
 			// User provided input and clicked OK
@@ -277,11 +286,55 @@ class ImageSorter extends SlideShow {
 			// User clicked Cancel
 			console.log("User cancelled the prompt.");
 		}
+	}
+	
+	async openConfiguration() {
+		const urlParams = new URLSearchParams(window.location.search);
+	    this.sortedImages = await fetch(
+	        serverURL + "sorted_images/?" + new URLSearchParams({
+	            directory: urlParams.get("images_directory"),
+	            name: urlParams.get("name") ?? defaultNameParameter,
+	        }),
+	        {
+	            method: "GET",
+                headers: defaultHeaders,
+	        }
+	    )
+	    .then(response => response.json())
+	    .then(data => {
+		    return data.images;
+	    })
+	    .catch(error => {
+		    throw error;
+	    });
 
+		this.updateView();
 	}
 	
 	saveConfiguration() {
-		console.log(this.sortedImages);
+		const urlParams = new URLSearchParams(window.location.search);
+	    return fetch(
+	        serverURL + "sorted_images",
+	        {
+	            method: "POST",
+                headers: defaultHeaders,
+                body: JSON.stringify({
+                    directory: urlParams.get("images_directory"),
+                    name: urlParams.get("name") ?? defaultNameParameter,
+                    sorted_images: {
+                        images: this.sortedImages
+                    },
+                }),
+	        }
+	    )
+	    .then(response => response.json())
+	    .then(data => {
+		    console.log("Saved configuration to file", data);
+		    return data;
+	    })
+	    .catch(error => {
+		    throw error;
+	    });
 	}
 	
 	nextSortedImage(steps = 1, newIndex = null) {

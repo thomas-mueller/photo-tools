@@ -12,7 +12,7 @@ app.add_middleware(
     fastapi.middleware.cors.CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
+    allow_methods=["*"],
     allow_headers=["*"],
 )
 
@@ -25,10 +25,10 @@ class ImagesList(pydantic.BaseModel):
     images: typing.List[str]
 
 
-class SortedImagesConfiguration(pydantic.BaseModel):
-    image_directories: typing.List[str]
-    sorted_images: typing.List[str]
-    path: str
+class SaveSortedImages(pydantic.BaseModel):
+    directory: str
+    name: str
+    sorted_images: ImagesList
 
 
 @app.get("/list_images/")
@@ -39,19 +39,25 @@ def list_images(directory: str, sort_by_exif_date: bool = False) -> ImagesList:
     return ImagesList(images=sorted(images))
 
 
-@app.get("/sorted_images_configuration/")
-def load_sorted_images_configuration(path: str) -> SortedImagesConfiguration:
-    if not os.path.isabs(path):
-        path = os.path.join(base_dir, path)
-    config = None
-    with open(path) as input_file:
-        config = json.load(input_file)
-    return SortedImagesConfiguration(**config)
+def get_sorted_images_filename(directory: str, name: str) -> str:
+    return os.path.join(directory, name+".json")
 
 
-@app.post("/sorted_images_configuration/")
-def save_sorted_images_configuration(config: SortedImagesConfiguration):
-    if not os.path.isabs(config.path):
-        config.path = os.path.join(base_dir, config.path)
-    with open(config.path, "w") as output_file:
-        json.dump(config, output_file, indent=4)
+@app.get("/sorted_images/")
+def load_sorted_images(directory: str, name: str) -> ImagesList:
+    sorted_images_filename = get_sorted_images_filename(directory=directory, name=name)
+    sorted_images = None
+    if os.path.exists(sorted_images_filename):
+        with open(sorted_images_filename) as sorted_images_file:
+            sorted_images = ImagesList(**json.load(sorted_images_file))
+    else:
+        sorted_images = ImagesList(images=[])
+    return sorted_images
+
+
+@app.post("/sorted_images/")
+def save_sorted_images(body: SaveSortedImages) -> str:
+    sorted_images_filename = get_sorted_images_filename(directory=body.directory, name=body.name)
+    with open(sorted_images_filename, "w") as sorted_images_file:
+        json.dump(body.sorted_images.dict(), sorted_images_file, indent=4)
+    return sorted_images_filename
