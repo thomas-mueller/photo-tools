@@ -185,8 +185,9 @@ class ImageSorter extends SlideShow {
 		this.sortedIndicesOfCurrentImage = [];
 		this.sortedImages = [];
 
-		this.setSlides();
-		this.openConfiguration();
+		this.setSlides().then(() => {
+			this.openConfiguration();
+		});
 	}
 
 	handleFullScreenChange() {
