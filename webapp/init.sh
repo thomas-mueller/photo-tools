@@ -1,6 +1,6 @@
 #! /bin/sh
 
-python -m venv .photo-webapp
+virtualenv .photo-webapp
 . .photo-webapp/bin/activate
 
 pip install -r requirements.txt
