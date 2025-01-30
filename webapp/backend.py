@@ -36,6 +36,7 @@ def list_images(directory: str, sort_by_exif_date: bool = False) -> ImagesList:
     images = [
         os.path.join(subdir, file) for subdir, dirs, files in os.walk(directory) for file in files if file.lower().endswith(image_formats)
     ]
+    images = [image.replace("/var/services/web/", "") for image in images]
     return ImagesList(images=sorted(images))
 
 

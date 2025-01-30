@@ -5,4 +5,4 @@ virtualenv .photo-webapp
 
 pip install -r requirements.txt
 
-uvicorn backend:app --reload
+uvicorn backend:app --reload --host 0.0.0.0 --port 8000
