@@ -31,6 +31,12 @@ class SaveSortedImages(pydantic.BaseModel):
     sorted_images: ImagesList
 
 
+@app.get("/ping", status_code=200)
+@app.head("/ping", status_code=200)
+def ping():
+    return
+
+
 @app.get("/list_images/")
 def list_images(directory: str, sort_by_exif_date: bool = False) -> ImagesList:
     images = [
@@ -41,7 +47,7 @@ def list_images(directory: str, sort_by_exif_date: bool = False) -> ImagesList:
 
 
 def get_sorted_images_filename(directory: str, name: str) -> str:
-    return os.path.join(directory, name+".json")
+    return os.path.join(directory, name + ".json")
 
 
 @app.get("/sorted_images/")
