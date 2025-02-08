@@ -40,48 +40,48 @@ html, body {
 }
 
 .top-bar, .bottom-bar {
-    position: absolute;
-    width: 100%;
-    background-color: rgba(255, 255, 255, 0.1);
-    display: flex;
-    justify-content: center;
-    align-items: center;
+	position: absolute;
+	width: 100%;
+	background-color: rgba(255, 255, 255, 0.1);
+	display: flex;
+	justify-content: center;
+	align-items: center;
 }
 
 .top-bar {
-    top: 0;
+	top: 0;
 }
 
 .bottom-bar {
-    bottom: 0;
+	bottom: 0;
 }
 
 .top-bar-left,
 .top-bar-right,
 .bottom-bar-left,
 .bottom-bar-right {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    display: flex;
-    align-items: center;
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	display: flex;
+	align-items: center;
 }
 
 .top-bar-left, .bottom-bar-left {
-    left: 0;
+	left: 0;
 }
 
 .top-bar-right, .bottom-bar-right {
-    right: 0;
+	right: 0;
 }
 
 .top-bar-center, .bottom-bar-center {
-    flex: 0 0 auto;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    max-width: 100%;
-    overflow: hidden;
+	flex: 0 0 auto;
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	max-width: 100%;
+	overflow: hidden;
 }
 
 .top-bar-left div,
@@ -112,15 +112,15 @@ html, body {
 }
 
 .top-bar button, .bottom-bar button {
-    width: 3vw;
-    height: 3vw;
-    background-size: contain;
-    background-repeat: no-repeat;
-    background-position: center;
+	width: 3vw;
+	height: 3vw;
+	background-size: contain;
+	background-repeat: no-repeat;
+	background-position: center;
 }
 
 .top-bar button:active, .bottom-bar button:active {
-    background-color: rgba(0, 0, 0, 0.75);
+	background-color: rgba(0, 0, 0, 0.75);
 }
 
 .button-left1 {
