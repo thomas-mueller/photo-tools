@@ -48,12 +48,32 @@ html, body {
 	align-items: center;
 }
 
+
+.left-bar, .right-bar {
+	position: absolute;
+	top: 4.5rem;
+	bottom: 4.5rem;
+	background-color: rgba(255, 255, 255, 0.1);
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+}
+
 .top-bar {
 	top: 0;
 }
 
 .bottom-bar {
 	bottom: 0;
+}
+
+.right-bar {
+	right: 0;
+}
+
+.left-bar {
+	left: 0;
 }
 
 .top-bar-left,
@@ -91,7 +111,11 @@ html, body {
 .bottom-bar-left div,
 .bottom-bar-center div,
 .bottom-bar-right div,
-.bottom-bar button {
+.bottom-bar button,
+.left-bar div,
+.left-bar button,
+.right-bar div,
+.right-bar button {
 	display: flex;
 	justify-content: center;
 	align-items: center;
@@ -107,11 +131,11 @@ html, body {
 	font-weight: bold;
 }
 
-.top-bar div, .bottom-bar div {
+.top-bar div, .bottom-bar div, .left-bar div, .right-bar div {
 	padding: 0.25rem;
 }
 
-.top-bar button, .bottom-bar button {
+.top-bar button, .bottom-bar button, .left-bar button, .right-bar button {
 	width: 3rem;
 	height: 3rem;
 	background-size: contain;
@@ -119,7 +143,7 @@ html, body {
 	background-position: center;
 }
 
-.top-bar button:active, .bottom-bar button:active {
+.top-bar button:active, .bottom-bar button:active, .left-bar button:active, .right-bar button:active {
 	background-color: rgba(0, 0, 0, 0.75);
 }
 

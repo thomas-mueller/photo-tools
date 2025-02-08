@@ -30,18 +30,8 @@
 					<button class="button-right3" onclick="slideShow.nextSortedImage(null, -1)"></button>
 				</div>
 				<div class="top-bar-right">
-					<button class="button-down3" onclick="slideShow.shiftCurrentSortedImage(null, 0)"></button>
-					<button class="button-down2" onclick="slideShow.shiftCurrentSortedImage(-10)"></button>
-					<button class="button-down1" onclick="slideShow.shiftCurrentSortedImage(-1)"></button>
-					<button class="button-up1" onclick="slideShow.shiftCurrentSortedImage(1)"></button>
-					<button class="button-up2" onclick="slideShow.shiftCurrentSortedImage(10)"></button>
-					<button class="button-up3" onclick="slideShow.shiftCurrentSortedImage(null, Number.MAX_SAFE_INTEGER)"></button>
 					<button class="button-minus" onclick="slideShow.addCurrentImage(true)"></button>
 				</div>
-			</div>
-			<div class="center">
-<!--				<div class="center-left-half" onclick="slideShow.nextSlide(-1)"></div>-->
-<!--				<div class="center-right-half" onclick="slideShow.nextSlide(1)"></div>-->
 			</div>
 			<div class="bottom-bar">
 				<div class="bottom-bar-left">
@@ -58,9 +48,22 @@
 					<button class="button-right3" onclick="slideShow.nextSlide(null, -1)"></button>
 				</div>
 				<div class="bottom-bar-right">
-<!--					<div id="filename-label"></div>-->
 					<button class="button-plus" onclick="slideShow.addCurrentImage(false)"></button>
 				</div>
+			</div>
+			<div class="left-bar">
+			</div>
+			<div class="right-bar">
+				<button class="button-up3" onclick="slideShow.shiftCurrentSortedImage(null, Number.MAX_SAFE_INTEGER)"></button>
+				<button class="button-up2" onclick="slideShow.shiftCurrentSortedImage(10)"></button>
+				<button class="button-up1" onclick="slideShow.shiftCurrentSortedImage(1)"></button>
+				<button class="button-down1" onclick="slideShow.shiftCurrentSortedImage(-1)"></button>
+				<button class="button-down2" onclick="slideShow.shiftCurrentSortedImage(-10)"></button>
+				<button class="button-down3" onclick="slideShow.shiftCurrentSortedImage(null, 0)"></button>
+			</div>
+			<div class="center">
+<!--				<div class="center-left-half" onclick="slideShow.nextSlide(-1)"></div>-->
+<!--				<div class="center-right-half" onclick="slideShow.nextSlide(1)"></div>-->
 			</div>
 		</div>
 		<script>
