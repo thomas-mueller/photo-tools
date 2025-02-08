@@ -1,5 +1,5 @@
-//const serverURL = "http://localhost:8000/";
-const serverURL = "http://ds420j.local:8000/";
+const serverURL = "http://localhost:8000/";
+//const serverURL = "http://ds420j.local:8000/";
 //const serverURL = "http://192.168.2.100:8000/";
 const defaultHeaders = {
     "content-type": "application/json",

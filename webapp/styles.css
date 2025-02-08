@@ -88,11 +88,11 @@ html, body {
 }
 
 .top-bar-left, .bottom-bar-left {
-	left: 0;
+	left: 1em;
 }
 
 .top-bar-right, .bottom-bar-right {
-	right: 0;
+	right: 1em;
 }
 
 .top-bar-center, .bottom-bar-center {
