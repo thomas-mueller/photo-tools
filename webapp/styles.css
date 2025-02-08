@@ -123,10 +123,6 @@ html, body {
 	background-color: rgba(0, 0, 0, 0.75);
 }
 
-/*[class^="button-"] {*/
-/*    background-image: url("icons/" attr(class) ".svg");*/
-/*}*/
-
 .buttons {
 	position: absolute;
 	width: 100%;
