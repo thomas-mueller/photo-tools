@@ -23,7 +23,7 @@ class SlideShow {
 		this.slideTransitionAllowed = true
 
 		const urlParams = new URLSearchParams(window.location.search);
-		const slideParameter = parseInt(urlParams.get("slide"), 10);
+		const slideParameter = parseInt(urlParams.get("i"), 10);
 		if ((! isNaN(slideParameter)) && (slideParameter >= 0)) {
 			this.nextSlideIndex = slideParameter - 1;
 		}
@@ -59,7 +59,8 @@ class SlideShow {
 		this.slides[this.nextSlideIndex].style.display = "block";
 
 		const urlParams = new URLSearchParams(window.location.search);
-		urlParams.set("slide", this.nextSlideIndex+1);
+		urlParams.set("i", this.nextSlideIndex+1);
+		urlParams.set("f", this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop());
 		const newURL = window.location.pathname + "?" + urlParams;
 		window.history.pushState({path: newURL}, "", newURL);
 		document.title = this.title + "(" + (this.nextSlideIndex + 1) + "/" + this.slides.length + ")";
@@ -210,7 +211,7 @@ class ImageSorter extends SlideShow {
 		const urlParams = new URLSearchParams(window.location.search);
 	    const images = await fetch(
 	        serverURL + "list_images/?" + new URLSearchParams({
-	            directory: urlParams.get("images_directory")
+	            directory: urlParams.get("d")
 	        }),
 	        {
 	            method: "GET",
@@ -248,13 +249,15 @@ class ImageSorter extends SlideShow {
 		super.updateView();
 		
 		const urlParams = new URLSearchParams(window.location.search);
-		this.title = (urlParams.get("name") ?? defaultNameParameter) + " "
+		this.title = (urlParams.get("o") ?? defaultNameParameter) + " "
 
 		var imageLabel = document.getElementById("image-label");
 		imageLabel.innerHTML = (this.nextSlideIndex + 1) + "/" + this.slides.length;
 
 		var filenameLabel = document.getElementById("filename-label");
-		filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
+		if (filenameLabel) {
+			filenameLabel.innerHTML = this.slides[this.nextSlideIndex].style.backgroundImage.slice(4, -2).split("/").pop();
+		}
 		
 		var sortedImageLabel = document.getElementById("sorted-image-label");
 		const modifySortedImageClassNames = ["button-down3", "button-down2", "button-down1", "button-up1", "button-up2", "button-up3", "button-minus"];
@@ -299,8 +302,8 @@ class ImageSorter extends SlideShow {
 		const urlParams = new URLSearchParams(window.location.search);
 	    this.sortedImages = await fetch(
 	        serverURL + "sorted_images/?" + new URLSearchParams({
-	            directory: urlParams.get("images_directory"),
-	            name: urlParams.get("name") ?? defaultNameParameter,
+	            directory: urlParams.get("d"),
+	            name: urlParams.get("o") ?? defaultNameParameter,
 	        }),
 	        {
 	            method: "GET",
@@ -326,8 +329,8 @@ class ImageSorter extends SlideShow {
 	            method: "POST",
                 headers: defaultHeaders,
                 body: JSON.stringify({
-                    directory: urlParams.get("images_directory"),
-                    name: urlParams.get("name") ?? defaultNameParameter,
+                    directory: urlParams.get("d"),
+                    name: urlParams.get("o") ?? defaultNameParameter,
                     sorted_images: {
                         images: this.sortedImages
                     },
