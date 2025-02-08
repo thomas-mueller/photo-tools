@@ -10,7 +10,7 @@ html, body {
 
 @media (min-resolution: 2dppx) {
     html, body {
-        font-size: 8px;
+        font-size: 10px;
     }
 }
 
