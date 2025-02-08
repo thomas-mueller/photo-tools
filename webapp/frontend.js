@@ -362,7 +362,7 @@ class ImageSorter extends SlideShow {
 				);
 			}
 			if (this.sortedIndicesOfCurrentImage.length == 0) {
-				steps -= Math.sign(steps);
+				steps -= (steps > 0 ? 1 : 0);
 			}
 			this.currentSortedImageIndex += steps;
 		} else {
