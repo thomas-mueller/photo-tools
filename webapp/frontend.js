@@ -183,6 +183,10 @@ class ImageSorter extends SlideShow {
 		document.addEventListener("mozfullscreenchange", this.handleFullScreenChange);
 		document.addEventListener("msfullscreenchange", this.handleFullScreenChange);
 
+		document.querySelectorAll('[class^="button-"]').forEach(function(button) {
+			button.style.backgroundImage = "url(icons/" + button.className.replace("button-", "") + ".svg)";
+		});
+
 		this.currentSortedImageIndex = null;
 		this.sortedIndicesOfCurrentImage = [];
 		this.sortedImages = [];

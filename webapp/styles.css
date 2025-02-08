@@ -123,69 +123,9 @@ html, body {
 	background-color: rgba(0, 0, 0, 0.75);
 }
 
-.button-left1 {
-	background-image: url("icons/left1.svg");
-}
-.button-left2 {
-	background-image: url("icons/left2.svg");
-}
-.button-left3 {
-	background-image: url("icons/left3.svg");
-}
-.button-right1 {
-	background-image: url("icons/right1.svg");
-}
-.button-right2 {
-	background-image: url("icons/right2.svg");
-}
-.button-right3 {
-	background-image: url("icons/right3.svg");
-}
-.button-up1 {
-	background-image: url("icons/up1.svg");
-}
-.button-up2 {
-	background-image: url("icons/up2.svg");
-}
-.button-up3 {
-	background-image: url("icons/up3.svg");
-}
-.button-down1 {
-	background-image: url("icons/down1.svg");
-}
-.button-down2 {
-	background-image: url("icons/down2.svg");
-}
-.button-down3 {
-	background-image: url("icons/down3.svg");
-}
-.button-plus {
-	background-image: url("icons/plus.svg");
-}
-.button-minus {
-	background-image: url("icons/minus.svg");
-}
-.button-select {
-	background-image: url("icons/select.svg");
-}
-.button-unselect {
-	background-image: url("icons/unselect.svg");
-}
-.button-new {
-	background-image: url("icons/new.svg");
-}
-.button-open {
-	background-image: url("icons/open.svg");
-}
-.button-save {
-	background-image: url("icons/save.svg");
-}
-.button-small {
-	background-image: url("icons/small.svg");
-}
-.button-full {
-	background-image: url("icons/full.svg");
-}
+/*[class^="button-"] {*/
+/*    background-image: url("icons/" attr(class) ".svg");*/
+/*}*/
 
 .buttons {
 	position: absolute;
