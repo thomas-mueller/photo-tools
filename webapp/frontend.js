@@ -65,7 +65,7 @@ class SlideShow {
 		document.title = this.title + "(" + (this.nextSlideIndex + 1) + "/" + this.slides.length + ")";
 
 		for (let slideIndex = 0; slideIndex < this.slides.length; slideIndex++) {
-			this.slides[slideIndex].style.display = (((slideIndex == this.currentSlideIndex) || (slideIndex == this.nextSlideIndex)) ? "block" : "none");
+			this.slides[slideIndex].style.display = (((slideIndex == this.currentSlideIndex) || (slideIndex == this.nextSlideIndex) || (slideIndex == this.nextSlideIndex+1)) ? "block" : "none");
 		}
 
 		setTimeout(() => {
@@ -262,7 +262,7 @@ class ImageSorter extends SlideShow {
 			(indices, element, index) => (element === this.images[this.currentSlideIndex]) ? indices.concat(index) : indices, []
 		);
 		if (this.sortedIndicesOfCurrentImage.length == 0) {
-			this.currentSortedImageIndex = null;
+			// this.currentSortedImageIndex = null;
 			sortedImageLabel.innerHTML = "-/" + this.sortedImages.length;
 			modifySortedImageButtons.forEach(button => {
 				button.style.display = "none";
@@ -354,6 +354,9 @@ class ImageSorter extends SlideShow {
 					}
 				);
 			}
+			if (this.sortedIndicesOfCurrentImage.length == 0) {
+				steps -= Math.sign(steps);
+			}
 			this.currentSortedImageIndex += steps;
 		} else {
 			this.currentSortedImageIndex = newIndex;
@@ -368,6 +371,7 @@ class ImageSorter extends SlideShow {
 		if (remove) {
 			if (this.sortedImages[this.currentSortedImageIndex] == this.images[this.currentSlideIndex]) {
 				this.sortedImages.splice(this.currentSortedImageIndex, 1);
+				// this.currentSortedImageIndex += 1;
 			}
 		} else {
 			this.sortedImages.push(this.images[this.currentSlideIndex]);
@@ -407,6 +411,7 @@ class ImageSorter extends SlideShow {
 	}
 	
 	keydownListener(event) {
+		console.log(event.key)
 		if (["n"].includes(event.key)) {
 			this.nextSortedImage();
 		} else if (["p"].includes(event.key)) {
